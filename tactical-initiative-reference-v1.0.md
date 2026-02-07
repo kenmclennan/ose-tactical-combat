@@ -1,22 +1,27 @@
 # OSE Tactical Initiative System
 
+_Version 1.0_
+
 ## Overview
 
 This system replaces Old School Essentials' standard initiative rules with an Action Point (AP) system inspired by RuneQuest and Mythras. It adds tactical depth to combat while preserving everything else you love about OSE.
 
 **What Changes:**
+
 - Initiative is replaced by Action Points
 - Each round, characters spend AP to take actions
 - Higher AP means acting first; ties resolve simultaneously
 - Multiple actions per round are possible
 
 **What Stays the Same:**
+
 - Attack rolls, Armor Class, and damage
 - Hit Points, saving throws, and death
 - Spells, abilities, and class features
 - Monster stats (except AP replaces initiative)
 
 **Why Use This System:**
+
 - **Tactical choices matter** - When you act depends on what you do and how much AP you have left
 - **Simultaneous combat** - Ties create dramatic mutual strikes and the real risk of trading blows
 - **Team tactics** - Cooperative actions reward coordination (Aid, Guard, Coordinated Attack/Defence)
@@ -37,13 +42,13 @@ This system replaces Old School Essentials' standard initiative rules with an Ac
 
 **Roll for AP (1d6 at start of each round):**
 
-| Roll  | Standard | DEX Bonus | DEX Penalty |
-| :---: | :------: | :-------: | :---------: |
-|   1   |   6 AP   |   6 AP    |    6 AP     |
-|   2   |   7 AP   |   7 AP    |    6 AP     |
-|  3-4  |   7 AP   |   7 AP    |    7 AP     |
-|   5   |   7 AP   |   8 AP    |    7 AP     |
-|   6   |   8 AP   |   8 AP    |    8 AP     |
+| Roll | Standard | DEX Bonus | DEX Penalty |
+| :--: | :------: | :-------: | :---------: |
+|  1   |   6 AP   |   6 AP    |    6 AP     |
+|  2   |   7 AP   |   7 AP    |    6 AP     |
+| 3-4  |   7 AP   |   7 AP    |    7 AP     |
+|  5   |   7 AP   |   8 AP    |    7 AP     |
+|  6   |   8 AP   |   8 AP    |    8 AP     |
 
 ---
 
@@ -59,9 +64,9 @@ This system replaces Old School Essentials' standard initiative rules with an Ac
 
 Repeat cycles until no one has enough AP to act, then start a new round.
 
-*Your AP determines when you act. Your action choice determines what you have left.*
+_Your AP determines when you act. Your action choice determines what you have left._
 
-*Unspent AP does not carry over - but leftover AP can add 1 point to the Fury Pool.*
+_Unspent AP does not carry over - but leftover AP can add 1 point to the Fury Pool._
 
 **Surprise:** Surprised combatants get half base AP (no variance roll). Players: 3 AP. Monsters: 3 AP.
 
@@ -69,27 +74,27 @@ Repeat cycles until no one has enough AP to act, then start a new round.
 
 ## Actions
 
-|  AP   | Action              | Effect                                                                     |
-| :---: | ------------------- | -------------------------------------------------------------------------- |
-|   1   | Wait                | Hold or set trigger to interrupt (not in melee)                            |
-|   2   | Quick Action        | Draw/drop weapon, take cover, stand up, open door                          |
-|   2   | Move (Half)         | Half encounter move (max 2 per round)                                      |
-|   2   | Brace               | Ready vs charge; free attack if charged (spear/polearm)                    |
-|   2   | Unarmed Attack      | 1d2+STR damage                                                             |
-|   2   | Aid                 | Ally gets +2 to next attack OR +2 AC until your next turn                  |
-|   2   | Guard               | Take attacks meant for adjacent ally (use your AC)                         |
-|   2   | Coordinated Defence | All in formation get +1 AC; pay each round; move together                  |
-|   2   | Break Free          | Escape grapple (STR vs STR or DEX); includes half move                     |
-|   3   | Move (Full)         | Full encounter move                                                        |
-|   3   | Melee Attack        | Strike adjacent foe (4 AP for two-handed weapons)                          |
-|   3   | Ranged Attack       | Shoot/throw at distant foe                                                 |
-|   3   | Fighting Withdrawal | Half move backward, no AC penalty                                          |
-|   3   | Grapple             | Opposed STR; win = grapple, lose = action wasted                           |
-|   4   | Cast Spell          | Cast a prepared spell                                                      |
-|   4   | Retreat             | Full move backward, foes get +2 to hit you                                 |
-|   4   | Coordinated Attack  | Attack with allies vs same target; +1 to hit, +1 damage per extra attacker |
-|   5   | Aimed Shot          | Ranged attack with +2 to hit                                               |
-|   5   | Charge              | Full move + attack, +2 to hit, -2 AC until next turn                       |
+| AP  | Action              | Effect                                                                     |
+| :-: | ------------------- | -------------------------------------------------------------------------- |
+|  1  | Wait                | Hold or set trigger to interrupt (not in melee)                            |
+|  2  | Quick Action        | Draw/drop weapon, take cover, stand up, open door                          |
+|  2  | Move (Half)         | Half encounter move (max 2 per round)                                      |
+|  2  | Brace               | Ready vs charge; free attack if charged (spear/polearm)                    |
+|  2  | Unarmed Attack      | 1d2+STR damage                                                             |
+|  2  | Aid                 | Ally gets +2 to next attack OR +2 AC until your next turn                  |
+|  2  | Guard               | Take attacks meant for adjacent ally (use your AC)                         |
+|  2  | Coordinated Defence | All in formation get +1 AC; pay each round; move together                  |
+|  2  | Break Free          | Escape grapple (STR vs STR or DEX); includes half move                     |
+|  3  | Move (Full)         | Full encounter move                                                        |
+|  3  | Melee Attack        | Strike adjacent foe (4 AP for two-handed weapons)                          |
+|  3  | Ranged Attack       | Shoot/throw at distant foe                                                 |
+|  3  | Fighting Withdrawal | Half move backward, no AC penalty                                          |
+|  3  | Grapple             | Opposed STR; win = grapple, lose = action wasted                           |
+|  4  | Cast Spell          | Cast a prepared spell                                                      |
+|  4  | Retreat             | Full move backward, foes get +2 to hit you                                 |
+|  4  | Coordinated Attack  | Attack with allies vs same target; +1 to hit, +1 damage per extra attacker |
+|  5  | Aimed Shot          | Ranged attack with +2 to hit                                               |
+|  5  | Charge              | Full move + attack, +2 to hit, -2 AC until next turn                       |
 
 **Grappling:** Requires a free hand (no two-handed weapons or sword-and-shield). While grappling, neither can move or attack others. Unarmed attacks only. Both at -2 AC from outside attacks.
 
@@ -103,17 +108,17 @@ Repeat cycles until no one has enough AP to act, then start a new round.
 
 Communal pool shared by all players (monsters do not contribute or spend). At round end, each player with leftover AP may add 1 to the pool. Spend at any time:
 
-| Cost  | Effect                           |
-| :---: | -------------------------------- |
-|   1   | +1 damage to a successful attack |
-|   2   | -1 damage from incoming attack   |
-|   3   | +1 AP to your current pool       |
+| Cost | Effect                           |
+| :--: | -------------------------------- |
+|  1   | +1 damage to a successful attack |
+|  2   | -1 damage from incoming attack   |
+|  3   | +1 AP to your current pool       |
 
 ---
 
 ## Example of Play
 
-*Sarah plays **Kael Ironhand**, a fighter with sword and shield (AC 4, STR +1). Marcus plays **Zara the Unseen**, a magic-user (AC 8, DEX bonus). They face two **Temple Guardians** - 4 HD undead warriors wielding ceremonial halberds (two-handed).*
+_Sarah plays **Kael Ironhand**, a fighter with sword and shield (AC 4, STR +1). Marcus plays **Zara the Unseen**, a magic-user (AC 8, DEX bonus). They face two **Temple Guardians** - 4 HD undead warriors wielding ceremonial halberds (two-handed)._
 
 ---
 
@@ -133,7 +138,7 @@ The Guardians have fixed **6 AP** each.
 
 **Sarah:** "Kael charges the nearest Guardian!" (Charge - 5 AP)
 
-**Marcus:** "Zara holds back - she Waits, trigger: if a Guardian attacks Kael, she casts *Magic Missile*." (Wait - 1 AP)
+**Marcus:** "Zara holds back - she Waits, trigger: if a Guardian attacks Kael, she casts _Magic Missile_." (Wait - 1 AP)
 
 **GM:** "Guardian A advances on Kael with halberd raised. Guardian B moves to flank." (Both Full Move - 3 AP)
 
@@ -143,7 +148,7 @@ Zara's Wait doesn't trigger yet - no attack declared. Kael's charge carries him 
 
 **Deduct AP:** Kael 7→2, Zara 8→7, Guardian A 6→3, Guardian B 6→3.
 
-*Kael is now -2 AC from his Charge until next round (currently AC 6).*
+_Kael is now -2 AC from his Charge until next round (currently AC 6)._
 
 ---
 
@@ -179,7 +184,7 @@ Kael and both Guardians have 0 AP. Zara has 5 AP remaining.
 
 **GM:** "Zara, you have AP left. One more cycle?"
 
-**Marcus:** "Zara steps forward and hurls a *Magic Missile* at Guardian A!" (Full Move - 3 AP, Cast Spell - 4 AP = 7 AP total. She only has 5!)
+**Marcus:** "Zara steps forward and hurls a _Magic Missile_ at Guardian A!" (Full Move - 3 AP, Cast Spell - 4 AP = 7 AP total. She only has 5!)
 
 **Marcus:** "Scratch that - Half Move toward Kael, then cast." (Half Move 2 AP + Cast Spell 4 AP = 6 AP. Still too much!)
 
@@ -247,4 +252,4 @@ Six damage. Kael's blade catches the Guardian beneath its jaw, wrenching upward 
 
 ---
 
-*Compatible with Old School Essentials. All other rules (attack rolls, AC, damage, saves) unchanged.*
+_Compatible with Old School Essentials. All other rules (attack rolls, AC, damage, saves) unchanged._
