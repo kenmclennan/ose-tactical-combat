@@ -91,12 +91,12 @@ _Unspent AP does not carry over - but leftover AP banks Fury (1 per 2 leftover A
 |  3  | Fighting Withdrawal | Half move backward, no AC penalty                                          |
 |  3  | Grapple             | Opposed STR; win = grapple, lose = action wasted                           |
 |  4  | Two-Handed Attack   | Strike with two-handed weapon                                              |
-|  4  | Slow Action         | Complex non-combat activity (barricade door, bind wounds)                  |
 |  4  | Cast Spell          | Cast a prepared spell                                                      |
 |  4  | Retreat             | Full move backward, foes get +2 to hit you                                 |
 |  4  | Coordinated Attack  | Attack with allies vs same target; +1 to hit, +1 damage per extra attacker |
 |  5  | Aimed Shot          | Ranged attack with +2 to hit                                               |
 |  5  | Charge              | Full move + attack, +2 to hit, -2 AC until next turn                       |
+|  6  | Slow Action         | Complex non-combat activity (barricade door, bind wounds)                  |
 
 **Grappling:** Requires a free hand (no two-handed weapons or sword-and-shield). While grappling, neither can move or attack others. Unarmed attacks only. Both at -2 AC from outside attacks.
 
