@@ -1,0 +1,188 @@
+import type { CombatState, Combatant, Declaration } from "../../types";
+import { saveState } from "../../state/store";
+import {
+  getCombatantById,
+  getCurrentAp,
+  getActiveCombatants,
+  anyoneCanAct,
+} from "../../state/selectors";
+import { ACTION_LIST } from "../../rules/actions";
+import { deductCycleCosts } from "../../rules/resolution";
+import { renderFuryPanel } from "../components/fury-panel";
+
+export function renderResolutionView(
+  state: CombatState,
+  _playerId: string,
+  isGM: boolean,
+): string {
+  const cycle = state.round!.currentCycle;
+  const order = cycle.resolutionOrder;
+  const currentIdx = cycle.currentResolutionIndex;
+  const allResolved = currentIdx >= order.length;
+
+  return `
+    <div class="resolution-view">
+      <div class="resolution-list">
+        ${order.map((id, idx) => {
+          const c = getCombatantById(state, id);
+          const decl = cycle.declarations.find((d) => d.combatantId === id);
+          if (!c || !decl) return "";
+          return renderResolutionRow(c, decl, idx, currentIdx, state);
+        }).join("")}
+        ${order.length === 0 ? `<div class="empty-list">No declarations to resolve</div>` : ""}
+      </div>
+      ${state.fury.current > 0 ? renderFuryPanel(state, !isGM) : ""}
+      ${isGM ? `
+        <div class="resolution-actions">
+          ${!allResolved ? `
+            <button class="btn btn-primary btn-full" data-action="resolve-next">
+              Next: ${getNextLabel(state)}
+            </button>
+          ` : `
+            <button class="btn btn-primary btn-full" data-action="end-cycle">
+              End Cycle
+            </button>
+          `}
+        </div>
+      ` : `
+        <div class="hint">${allResolved ? "Waiting for GM to end cycle..." : "Resolving actions..."}</div>
+      `}
+    </div>
+  `;
+}
+
+function renderResolutionRow(
+  c: Combatant,
+  decl: Declaration,
+  idx: number,
+  currentIdx: number,
+  state: CombatState,
+): string {
+  const ap = getCurrentAp(state, c.id);
+  const actionName = ACTION_LIST.find((a) => a.id === decl.actionId)?.name ?? decl.actionId;
+  const isCurrent = idx === currentIdx;
+  const isResolved = idx < currentIdx;
+  const isPending = idx > currentIdx;
+
+  let rowClass = "resolution-row";
+  if (isCurrent) rowClass += " current";
+  if (isResolved) rowClass += " resolved";
+  if (isPending) rowClass += " pending";
+
+  return `
+    <div class="${rowClass}">
+      <div class="resolution-info">
+        <span class="resolution-marker">
+          ${isResolved ? "&#x2713;" : isCurrent ? "&#x25B6;" : "&#x25CB;"}
+        </span>
+        <span class="combatant-name">${escapeHtml(c.name)}</span>
+        <span class="ap-display">${ap} AP</span>
+      </div>
+      <div class="resolution-action">
+        <span class="decl-action-label">${actionName}</span>
+        <span class="action-cost-badge">${decl.cost} AP</span>
+      </div>
+    </div>
+  `;
+}
+
+function getNextLabel(state: CombatState): string {
+  const cycle = state.round!.currentCycle;
+  const idx = cycle.currentResolutionIndex;
+  if (idx >= cycle.resolutionOrder.length) return "End Cycle";
+  const id = cycle.resolutionOrder[idx];
+  const c = getCombatantById(state, id);
+  return c ? escapeHtml(c.name) : "Unknown";
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+export function bindResolutionEvents(
+  container: HTMLElement,
+  state: CombatState,
+  _playerId: string,
+  isGM: boolean,
+): void {
+  container.addEventListener("click", (e) => {
+    const target = (e.target as HTMLElement).closest("[data-action]") as HTMLElement | null;
+    if (!target) return;
+    const action = target.dataset.action;
+
+    if (action === "resolve-next" && isGM) {
+      resolveNext(state);
+    }
+    if (action === "end-cycle" && isGM) {
+      endCycle(state);
+    }
+  });
+}
+
+function resolveNext(state: CombatState): void {
+  const cycle = state.round!.currentCycle;
+  const idx = cycle.currentResolutionIndex;
+  if (idx >= cycle.resolutionOrder.length) return;
+
+  // Mark current declaration as resolved
+  const currentId = cycle.resolutionOrder[idx];
+  const declarations = cycle.declarations.map((d) =>
+    d.combatantId === currentId ? { ...d, resolved: true } : d,
+  );
+
+  saveState({
+    ...state,
+    round: {
+      ...state.round!,
+      currentCycle: {
+        ...cycle,
+        declarations,
+        currentResolutionIndex: idx + 1,
+      },
+    },
+  });
+}
+
+function endCycle(state: CombatState): void {
+  const round = state.round!;
+  const cycle = round.currentCycle;
+
+  // Deduct AP costs
+  const apCurrent = deductCycleCosts(round.apCurrent, cycle.declarations);
+
+  // Check if anyone can still act
+  const testState: CombatState = {
+    ...state,
+    round: { ...round, apCurrent },
+  };
+
+  if (anyoneCanAct(testState)) {
+    // Start new cycle
+    saveState({
+      ...state,
+      phase: "declaration",
+      round: {
+        ...round,
+        apCurrent,
+        currentCycle: {
+          cycleNumber: cycle.cycleNumber + 1,
+          declarations: [],
+          resolutionOrder: [],
+          currentResolutionIndex: 0,
+        },
+        completedCycles: round.completedCycles + 1,
+      },
+    });
+  } else {
+    // Round end
+    saveState({
+      ...state,
+      phase: "round-end",
+      round: {
+        ...round,
+        apCurrent,
+        completedCycles: round.completedCycles + 1,
+      },
+    });
+  }
+}

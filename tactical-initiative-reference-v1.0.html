@@ -1,421 +1,866 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>OSE Tactical Initiative System</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        @page {
-            size: A4;
-            margin: 1.5cm;
-        }
+      /* ===========================================
+           GAMING DOCUMENT TEMPLATE
+           Fantasy RPG Style - Parchment & Burgundy
+           =========================================== */
 
-        * {
-            box-sizing: border-box;
-        }
+      @page {
+        size: A4;
+        margin: 1.5cm;
+      }
 
+      * {
+        box-sizing: border-box;
+      }
+
+      /* --- Base Typography --- */
+      body {
+        font-family: "Crimson Pro", Georgia, serif;
+        font-size: 11pt;
+        line-height: 1.4;
+        color: #1a1a1a;
+        max-width: 210mm;
+        margin: 0 auto;
+        padding: 1cm;
+        background: #faf8f5;
+      }
+
+      /* --- Headings --- */
+      h1 {
+        font-family: "Cinzel", serif;
+        font-weight: 700;
+        font-size: 24pt;
+        text-align: center;
+        margin: 0 0 0.3cm 0;
+        color: #2c1810;
+        letter-spacing: 0.05em;
+        border-bottom: 2px solid #8b4513;
+        padding-bottom: 0.3cm;
+      }
+
+      h2 {
+        font-family: "Cinzel", serif;
+        font-weight: 600;
+        font-size: 14pt;
+        color: #4a2c1a;
+        margin: 0.5cm 0 0.2cm 0;
+        border-bottom: 1px solid #c9a86c;
+        padding-bottom: 0.1cm;
+      }
+
+      h3 {
+        font-family: "Cinzel", serif;
+        font-weight: 600;
+        font-size: 12pt;
+        color: #5c3d2e;
+        margin: 0.4cm 0 0.15cm 0;
+      }
+
+      h4 {
+        font-family: "Cinzel", serif;
+        font-weight: 600;
+        font-size: 11pt;
+        color: #5c3d2e;
+        margin: 0.3cm 0 0.1cm 0;
+      }
+
+      /* --- Body Text --- */
+      p {
+        margin: 0.15cm 0;
+      }
+
+      strong {
+        font-weight: 600;
+        color: #2c1810;
+      }
+
+      em {
+        font-style: italic;
+      }
+
+      /* --- Lists --- */
+      ul,
+      ol {
+        margin: 0.1cm 0;
+        padding-left: 0.5cm;
+      }
+
+      li {
+        margin: 0.05cm 0;
+      }
+
+      /* --- Tables --- */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0.2cm 0;
+        font-size: 10pt;
+      }
+
+      th {
+        font-family: "Cinzel", serif;
+        font-weight: 600;
+        background: #3d2817;
+        color: #f5f0e6;
+        padding: 0.15cm 0.2cm;
+        text-align: left;
+        font-size: 9pt;
+      }
+
+      th:first-child {
+        text-align: center;
+        width: 2cm;
+      }
+
+      th[align="center"],
+      td[align="center"] {
+        text-align: center;
+      }
+
+      th[align="right"],
+      td[align="right"] {
+        text-align: right;
+      }
+
+      td {
+        padding: 0.1cm 0.2cm;
+        border-bottom: 1px solid #d4c4a8;
+        vertical-align: top;
+      }
+
+      td:first-child {
+        text-align: center;
+        font-weight: 600;
+        color: #4a2c1a;
+      }
+
+      tr:nth-child(even) {
+        background: #f5f0e6;
+      }
+
+      tr:hover {
+        background: #ebe4d4;
+      }
+
+      /* --- Horizontal Rules --- */
+      hr {
+        border: none;
+        border-top: 1px solid #c9a86c;
+        margin: 0.3cm 0;
+      }
+
+      /* --- Special Boxes --- */
+      .overview {
+        background: #f5f0e6;
+        border: 1px solid #c9a86c;
+        border-radius: 3px;
+        padding: 0.3cm;
+        margin-bottom: 0.3cm;
+      }
+
+      .overview h2 {
+        margin-top: 0;
+        border-bottom: none;
+      }
+
+      .callout {
+        background: #f5f0e6;
+        border-left: 3px solid #8b4513;
+        padding: 0.2cm 0.3cm;
+        margin: 0.2cm 0;
+      }
+
+      .warning {
+        background: #f5e6e6;
+        border-left: 3px solid #8b1313;
+        padding: 0.2cm 0.3cm;
+        margin: 0.2cm 0;
+      }
+
+      /* --- Notes and Annotations --- */
+      .note {
+        font-style: italic;
+        color: #5c4033;
+        margin: 0.15cm 0;
+      }
+
+      /* --- Scene/Narrative Boxes --- */
+      .example-scene,
+      .scene {
+        background: #2c1810;
+        color: #f5f0e6;
+        padding: 0.3cm;
+        border-radius: 3px;
+        margin: 0.2cm 0;
+      }
+
+      .example-scene strong,
+      .scene strong {
+        color: #c9a86c;
+      }
+
+      /* --- Dialogue --- */
+      .dialogue {
+        margin: 0.1cm 0;
+      }
+
+      .dialogue strong {
+        color: #8b4513;
+      }
+
+      /* --- Mechanics/Code --- */
+      .mechanics {
+        font-family: "Courier New", monospace;
+        font-size: 9pt;
+        background: #f0ebe0;
+        padding: 0.05cm 0.1cm;
+        border-radius: 2px;
+      }
+
+      code {
+        font-family: "Courier New", monospace;
+        font-size: 9pt;
+        background: #f0ebe0;
+        padding: 0.05cm 0.1cm;
+        border-radius: 2px;
+      }
+
+      pre {
+        font-family: "Courier New", monospace;
+        font-size: 9pt;
+        background: #f0ebe0;
+        padding: 0.2cm;
+        border-radius: 3px;
+        overflow-x: auto;
+      }
+
+      /* --- Badges/Tags --- */
+      .fury,
+      .badge {
+        background: #4a2c1a;
+        color: #f5f0e6;
+        padding: 0.05cm 0.15cm;
+        border-radius: 2px;
+        font-weight: 600;
+      }
+
+      .badge-light {
+        background: #c9a86c;
+        color: #2c1810;
+        padding: 0.05cm 0.15cm;
+        border-radius: 2px;
+        font-weight: 600;
+      }
+
+      /* --- Layout Helpers --- */
+      .columns {
+        column-count: 2;
+        column-gap: 0.5cm;
+      }
+
+      .columns-3 {
+        column-count: 3;
+        column-gap: 0.4cm;
+      }
+
+      .text-center {
+        text-align: center;
+      }
+
+      .text-right {
+        text-align: right;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        text-align: center;
+        font-style: italic;
+        color: #5c4033;
+        margin-top: 0.3cm;
+        padding-top: 0.2cm;
+        border-top: 1px solid #c9a86c;
+      }
+
+      /* --- Print Styles --- */
+      @media print {
         body {
-            font-family: 'Crimson Pro', Georgia, serif;
-            font-size: 11pt;
-            line-height: 1.4;
-            color: #1a1a1a;
-            max-width: 210mm;
-            margin: 0 auto;
-            padding: 1cm;
-            background: #faf8f5;
+          background: white;
+          padding: 0;
         }
 
-        h1 {
-            font-family: 'Cinzel', serif;
-            font-weight: 700;
-            font-size: 24pt;
-            text-align: center;
-            margin: 0 0 0.3cm 0;
-            color: #2c1810;
-            letter-spacing: 0.05em;
-            border-bottom: 2px solid #8b4513;
-            padding-bottom: 0.3cm;
+        .page-break {
+          page-break-before: always;
         }
 
-        h2 {
-            font-family: 'Cinzel', serif;
-            font-weight: 600;
-            font-size: 14pt;
-            color: #4a2c1a;
-            margin: 0.5cm 0 0.2cm 0;
-            border-bottom: 1px solid #c9a86c;
-            padding-bottom: 0.1cm;
+        .no-print {
+          display: none;
         }
+      }
 
-        h3 {
-            font-family: 'Cinzel', serif;
-            font-weight: 600;
-            font-size: 12pt;
-            color: #5c3d2e;
-            margin: 0.4cm 0 0.15cm 0;
-        }
+      /* --- Blockquotes (for flavor text) --- */
+      blockquote {
+        font-style: italic;
+        color: #5c4033;
+        border-left: 3px solid #c9a86c;
+        margin: 0.2cm 0;
+        padding: 0.1cm 0.3cm;
+        background: #faf8f5;
+      }
 
-        p {
-            margin: 0.15cm 0;
-        }
+      /* --- Links --- */
+      a {
+        color: #8b4513;
+        text-decoration: none;
+      }
 
-        strong {
-            font-weight: 600;
-            color: #2c1810;
-        }
-
-        em {
-            font-style: italic;
-        }
-
-        ul {
-            margin: 0.1cm 0;
-            padding-left: 0.5cm;
-        }
-
-        li {
-            margin: 0.05cm 0;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 0.2cm 0;
-            font-size: 10pt;
-        }
-
-        th {
-            font-family: 'Cinzel', serif;
-            font-weight: 600;
-            background: #3d2817;
-            color: #f5f0e6;
-            padding: 0.15cm 0.2cm;
-            text-align: left;
-            font-size: 9pt;
-        }
-
-        th:first-child {
-            text-align: center;
-            width: 2cm;
-        }
-
-        td {
-            padding: 0.1cm 0.2cm;
-            border-bottom: 1px solid #d4c4a8;
-            vertical-align: top;
-        }
-
-        td:first-child {
-            text-align: center;
-            font-weight: 600;
-            color: #4a2c1a;
-        }
-
-        tr:nth-child(even) {
-            background: #f5f0e6;
-        }
-
-        tr:hover {
-            background: #ebe4d4;
-        }
-
-        hr {
-            border: none;
-            border-top: 1px solid #c9a86c;
-            margin: 0.3cm 0;
-        }
-
-        .overview {
-            background: #f5f0e6;
-            border: 1px solid #c9a86c;
-            border-radius: 3px;
-            padding: 0.3cm;
-            margin-bottom: 0.3cm;
-        }
-
-        .overview h2 {
-            margin-top: 0;
-            border-bottom: none;
-        }
-
-        .note {
-            font-style: italic;
-            color: #5c4033;
-            margin: 0.15cm 0;
-        }
-
-        .example {
-            background: #faf8f5;
-            border-left: 3px solid #8b4513;
-            padding: 0.2cm 0.3cm;
-            margin: 0.2cm 0;
-        }
-
-        .example-scene {
-            background: #2c1810;
-            color: #f5f0e6;
-            padding: 0.3cm;
-            border-radius: 3px;
-            margin: 0.2cm 0;
-        }
-
-        .example-scene strong {
-            color: #c9a86c;
-        }
-
-        .dialogue {
-            margin: 0.1cm 0;
-        }
-
-        .dialogue strong {
-            color: #8b4513;
-        }
-
-        .mechanics {
-            font-family: 'Courier New', monospace;
-            font-size: 9pt;
-            background: #f0ebe0;
-            padding: 0.05cm 0.1cm;
-            border-radius: 2px;
-        }
-
-        .fury {
-            background: #4a2c1a;
-            color: #f5f0e6;
-            padding: 0.05cm 0.15cm;
-            border-radius: 2px;
-            font-weight: 600;
-        }
-
-        .columns {
-            column-count: 2;
-            column-gap: 0.5cm;
-        }
-
-        .footer {
-            text-align: center;
-            font-style: italic;
-            color: #5c4033;
-            margin-top: 0.3cm;
-            padding-top: 0.2cm;
-            border-top: 1px solid #c9a86c;
-        }
-
-        @media print {
-            body {
-                background: white;
-                padding: 0;
-            }
-
-            .page-break {
-                page-break-before: always;
-            }
-        }
+      a:hover {
+        text-decoration: underline;
+      }
     </style>
-</head>
-<body>
-
-<h1>OSE Tactical Initiative System</h1>
-
-<div class="overview">
-<h2>Overview</h2>
-<p>This system replaces Old School Essentials' standard initiative rules with an Action Point (AP) system inspired by RuneQuest and Mythras. It adds tactical depth to combat while preserving everything else you love about OSE.</p>
-
-<p><strong>What Changes:</strong> Initiative is replaced by Action Points. Each round, characters spend AP to take actions. Higher AP means acting first; ties resolve simultaneously. Multiple actions per round are possible.</p>
-
-<p><strong>What Stays the Same:</strong> Attack rolls, Armor Class, damage, Hit Points, saving throws, spells, abilities, and class features all work exactly as written in OSE.</p>
-
-<p><strong>Why Use This System:</strong></p>
-<ul>
-    <li><strong>Tactical choices matter</strong> - When you act depends on your AP and what actions you take</li>
-    <li><strong>Simultaneous combat</strong> - Ties create dramatic mutual strikes</li>
-    <li><strong>Team tactics</strong> - Cooperative actions reward coordination</li>
-    <li><strong>Fury Pool</strong> - Leftover AP becomes a shared resource for clutch moments</li>
-</ul>
-</div>
-
-<h2>Action Points</h2>
-
-<p><strong>Base AP per Round:</strong> Players: 7 AP | Monsters: 6 AP (may vary by creature)</p>
-
-<p><strong>Roll for AP</strong> (1d6 at start of each round):</p>
-
-<table>
-    <tr><th>Roll</th><th>Standard</th><th>DEX Bonus</th><th>DEX Penalty</th></tr>
-    <tr><td>1</td><td>6 AP</td><td>6 AP</td><td>6 AP</td></tr>
-    <tr><td>2</td><td>7 AP</td><td>7 AP</td><td>6 AP</td></tr>
-    <tr><td>3-4</td><td>7 AP</td><td>7 AP</td><td>7 AP</td></tr>
-    <tr><td>5</td><td>7 AP</td><td>8 AP</td><td>7 AP</td></tr>
-    <tr><td>6</td><td>8 AP</td><td>8 AP</td><td>8 AP</td></tr>
-</table>
-
-<h2>Round & Cycle Structure</h2>
-
-<p><strong>Round</strong> = AP refresh to next AP refresh. Contains multiple cycles.</p>
-
-<p><strong>Each Cycle:</strong></p>
-<ol>
-    <li><strong>Declaration</strong> - All combatants declare ONE action (note cost, don't deduct yet).</li>
-    <li><strong>Resolution</strong> - Actions resolve in order of <strong>highest current AP to lowest</strong>. Ties resolve simultaneously (opposed DEX check for movement conflicts).</li>
-    <li><strong>Deduct</strong> - Subtract AP costs from each participant's pool.</li>
-</ol>
-
-<p>Repeat cycles until no one has enough AP to act, then start a new round.</p>
-
-<p class="note">Your AP determines when you act. Your action choice determines what you have left. Unspent AP does not carry over - but leftover AP can add 1 point to the Fury Pool.</p>
-
-<p><strong>Surprise:</strong> Surprised combatants get half base AP (no roll). Players: 3 AP. Monsters: 3 AP.</p>
-
-<h2>Actions</h2>
-
-<table>
-    <tr><th>AP</th><th>Action</th><th>Effect</th></tr>
-    <tr><td>1</td><td>Wait</td><td>Hold or set trigger to interrupt (not in melee)</td></tr>
-    <tr><td>2</td><td>Quick Action</td><td>Draw/drop weapon, take cover, stand up, open door</td></tr>
-    <tr><td>2</td><td>Move (Half)</td><td>Half encounter move (max 2 per round)</td></tr>
-    <tr><td>2</td><td>Brace</td><td>Ready vs charge; free attack if charged (spear/polearm)</td></tr>
-    <tr><td>2</td><td>Unarmed Attack</td><td>1d2+STR damage</td></tr>
-    <tr><td>2</td><td>Aid</td><td>Ally gets +2 to next attack OR +2 AC until your next turn</td></tr>
-    <tr><td>2</td><td>Guard</td><td>Take attacks meant for adjacent ally (use your AC)</td></tr>
-    <tr><td>2</td><td>Coordinated Defence</td><td>All in formation get +1 AC; pay each round; move together</td></tr>
-    <tr><td>2</td><td>Break Free</td><td>Escape grapple (STR vs STR or DEX); includes half move</td></tr>
-    <tr><td>3</td><td>Move (Full)</td><td>Full encounter move</td></tr>
-    <tr><td>3</td><td>Melee Attack</td><td>Strike adjacent foe (4 AP for two-handed weapons)</td></tr>
-    <tr><td>3</td><td>Ranged Attack</td><td>Shoot/throw at distant foe</td></tr>
-    <tr><td>3</td><td>Fighting Withdrawal</td><td>Half move backward, no AC penalty</td></tr>
-    <tr><td>3</td><td>Grapple</td><td>Opposed STR; win = grapple, lose = action wasted</td></tr>
-    <tr><td>4</td><td>Cast Spell</td><td>Cast a prepared spell</td></tr>
-    <tr><td>4</td><td>Retreat</td><td>Full move backward, foes get +2 to hit you</td></tr>
-    <tr><td>4</td><td>Coordinated Attack</td><td>Attack with allies vs same target; +1 to hit, +1 damage per extra attacker</td></tr>
-    <tr><td>5</td><td>Aimed Shot</td><td>Ranged attack with +2 to hit</td></tr>
-    <tr><td>5</td><td>Charge</td><td>Full move + attack, +2 to hit, -2 AC until next turn</td></tr>
-</table>
-
-<p><strong>Grappling:</strong> Requires a free hand (no two-handed weapons or sword-and-shield). While grappling, neither can move or attack others. Unarmed attacks only. Both at -2 AC from outside attacks.</p>
-
-<p><strong>Wait & Interrupt:</strong> Declare a trigger (e.g., "if the orc charges, I attack"). When triggered, you interrupt and act first, then pay your action's AP cost. Must have enough AP remaining. Cannot Wait while in melee.</p>
-
-<p><strong>Monster Opposed Checks:</strong> Monsters use HD as their modifier (d20+HD) for grapple, break free, and movement contests.</p>
-
-<h2>Fury Pool</h2>
-
-<p>Communal pool shared by all players (monsters do not contribute or spend). At round end, each player with leftover AP may add 1 to the pool. Spend at any time:</p>
-
-<table>
-    <tr><th>Cost</th><th>Effect</th></tr>
-    <tr><td>1</td><td>+1 damage to a successful attack</td></tr>
-    <tr><td>2</td><td>-1 damage from incoming attack</td></tr>
-    <tr><td>3</td><td>+1 AP to your current pool</td></tr>
-</table>
-
-<div class="page-break"></div>
-
-<h2>Example of Play</h2>
-
-<p><em>Sarah plays <strong>Kael Ironhand</strong>, a fighter with sword and shield (AC 4, STR +1). Marcus plays <strong>Zara the Unseen</strong>, a magic-user (AC 8, DEX bonus). They face two <strong>Temple Guardians</strong> - 4 HD undead warriors wielding ceremonial halberds (two-handed).</em></p>
-
-<div class="example-scene">
-<strong>The Scene:</strong> The Sunken Temple of Koth-Azur. Phosphorescent fungi cast sickly green light across broken pillars and a cracked obsidian floor. The adventurers stand at the chamber's entrance. Forty feet away, flanking a sealed bronze door, two skeletal warriors in corroded ceremonial armor raise their halberds, eye sockets blazing with violet fire.
-</div>
-
-<p class="dialogue"><strong>GM:</strong> "The Guardians step forward, halberds leveled. Roll for AP - new round."</p>
-
-<p>Sarah rolls a 5 for Kael. With no DEX modifier: <strong>7 AP</strong>.<br>
-Marcus rolls a 6 for Zara. With DEX bonus: <strong>8 AP</strong>.<br>
-The Guardians have fixed <strong>6 AP</strong> each.</p>
-
-<h3>Round 1, Cycle 1</h3>
-
-<p class="dialogue"><strong>GM:</strong> "Declare actions."</p>
-<p class="dialogue"><strong>Sarah:</strong> "Kael charges the nearest Guardian!" <span class="mechanics">(Charge - 5 AP)</span></p>
-<p class="dialogue"><strong>Marcus:</strong> "Zara holds back - she Waits, trigger: if a Guardian attacks Kael, she casts Magic Missile." <span class="mechanics">(Wait - 1 AP)</span></p>
-<p class="dialogue"><strong>GM:</strong> "Guardian A advances on Kael with halberd raised. Guardian B moves to flank." <span class="mechanics">(Both Full Move - 3 AP)</span></p>
-
-<p><strong>Resolution order:</strong> Zara (8 AP), Kael (7 AP), then both Guardians (6 AP).</p>
-
-<p>Zara's Wait doesn't trigger yet - no attack declared. Kael's charge carries him across the cracked floor, slamming into Guardian A. He rolls 15 + 1 STR = 16, hitting AC 5. The Guardian is AC 5 - hit! Kael rolls 7 damage. Bones splinter as his blade bites deep. The Guardians complete their movement, flanking positions around Kael.</p>
-
-<p><strong>Deduct AP:</strong> Kael 7→2, Zara 8→7, Guardian A 6→3, Guardian B 6→3.</p>
-
-<p class="note">Kael is now -2 AC from his Charge until next round (currently AC 6).</p>
-
-<h3>Round 1, Cycle 2</h3>
-
-<p class="dialogue"><strong>GM:</strong> "Cycle 2. Declare."</p>
-<p class="dialogue"><strong>Sarah:</strong> "2 AP left... Kael takes a Quick Action to position his shield against Guardian B." <span class="mechanics">(Quick Action - 2 AP)</span></p>
-<p class="dialogue"><strong>Marcus:</strong> "Zara still Waits with the same trigger." <span class="mechanics">(Wait - 1 AP)</span></p>
-<p class="dialogue"><strong>GM:</strong> "Guardian A attacks Kael with its halberd!" <span class="mechanics">(Melee Attack, two-handed - 4 AP, but it only has 3 AP!)</span></p>
-
-<p class="dialogue"><strong>GM:</strong> "Wait - Guardian A only has 3 AP. It can't attack with a two-handed weapon. It uses Fighting Withdrawal instead, pulling back. Guardian B also withdraws, circling."</p>
-
-<p><strong>Resolution:</strong> Zara (6 AP), Guardian A (3 AP), Guardian B (3 AP), Kael (2 AP).</p>
-
-<p>Zara continues watching. Both Guardians withdraw half their movement, repositioning near the bronze door. Kael steadies his shield.</p>
-
-<p><strong>Deduct AP:</strong> Kael 2→0, Zara 6→5, Guardian A 3→0, Guardian B 3→0.</p>
-
-<h3>End of Round 1</h3>
-
-<p>Kael and both Guardians have 0 AP. Zara has 5 AP remaining.</p>
-
-<p class="dialogue"><strong>GM:</strong> "Zara, you have AP left. One more cycle?"</p>
-<p class="dialogue"><strong>Marcus:</strong> "She just casts from here." <span class="mechanics">(Cast Spell - 4 AP)</span></p>
-
-<p><strong>Resolution:</strong> The silvery bolt streaks across the chamber, automatic hit. 5 damage. Guardian A's ribcage explodes. It crumbles.</p>
-
-<p><strong>Deduct AP:</strong> Zara 5→1.</p>
-
-<p class="dialogue"><strong>GM:</strong> "Zara, you have 1 AP left. Not enough for another action."</p>
-<p class="dialogue"><strong>Marcus:</strong> "She holds position, keeping her eyes on the remaining Guardian."</p>
-
-<p><strong>Fury Pool:</strong> Zara's leftover 1 AP goes into the Fury Pool. The party now has <span class="fury">1 Fury</span>.</p>
-
-<h3>Round 2</h3>
-
-<p class="dialogue"><strong>GM:</strong> "New round. AP refreshes. Roll for AP."</p>
-
-<p>Sarah rolls a 1 for Kael. <strong>6 AP</strong> (bad luck!).<br>
-Marcus rolls a 3 for Zara. With DEX bonus, still just <strong>7 AP</strong>.<br>
-Guardian B: <strong>6 AP</strong>.</p>
-
-<p>Kael's Charge penalty ends. He's back to AC 4.</p>
-
-<p class="dialogue"><strong>GM:</strong> "One Guardian remains, backing toward the sealed door. It hisses in a long-dead language. Declare."</p>
-<p class="dialogue"><strong>Sarah:</strong> "Kael advances and attacks!" <span class="mechanics">(Full Move 3 AP + Melee Attack 3 AP = 6 AP)</span></p>
-<p class="dialogue"><strong>Marcus:</strong> "Zara uses Aid - she shouts a warning about the Guardian's halberd reach, giving Kael +2 to hit!" <span class="mechanics">(Aid - 2 AP)</span></p>
-<p class="dialogue"><strong>GM:</strong> "The Guardian braces its halberd against Kael's charge!" <span class="mechanics">(Brace - 2 AP)</span></p>
-
-<p><strong>Resolution order:</strong> Zara (7 AP), Kael and Guardian B (both 6 AP - simultaneous!)</p>
-
-<p>Zara's shout rings out: "Watch the reach, Kael!" (+2 to Kael's next attack)</p>
-
-<p>Kael and the Guardian act simultaneously. But wait - the Guardian Braced, and Kael is moving in. Does this trigger?</p>
-
-<p class="dialogue"><strong>GM:</strong> "Kael, you're moving in to attack - that's not a Charge action, just Full Move + Attack. The Brace only triggers on Charges. The Guardian wasted its Brace!"</p>
-
-<p>Kael swings with his Aid bonus: rolls 11 + 1 STR + 2 Aid = 14, hitting AC 5. Hit! He rolls damage: 5.</p>
-
-<p class="dialogue"><strong>Sarah:</strong> "That's only 10 total damage on this one. Four hit dice - it's probably still up."</p>
-<p class="dialogue"><strong>Marcus:</strong> "Spend our Fury point. Put it down."</p>
-<p class="dialogue"><strong>Sarah:</strong> "Spending 1 Fury for +1 damage!"</p>
-
-<p><strong>Fury Pool:</strong> <span class="fury">1 → 0</span></p>
-
-<p>Six damage. Kael's blade catches the Guardian beneath its jaw, wrenching upward with every ounce of strength. The skull splits. It collapses in a heap of ancient bone and rusted armor.</p>
-
-<p><strong>Deduct AP:</strong> Kael 6→0, Zara 7→5, Guardian B destroyed.</p>
-
-<div class="example-scene">
-<strong>GM:</strong> "The chamber falls silent. Violet fire fades from the Guardian's eye sockets. Before you, the sealed bronze door waits, covered in warnings written in a language that predates the kingdoms of men."
-</div>
-
-<p class="dialogue"><strong>Sarah:</strong> "Kael wipes his blade on his cloak. 'Good call on that warning, Zara.'"</p>
-<p class="dialogue"><strong>Marcus:</strong> "She's already studying the door. 'Save the thanks. Whatever they were guarding is still in there.'"</p>
-
-<p class="footer">Compatible with Old School Essentials. All other rules (attack rolls, AC, damage, saves) unchanged.</p>
-
-</body>
+  </head>
+  <body>
+    <h1>OSE Tactical Initiative System</h1>
+    <p><em>Version 1.0</em></p>
+    <h2>Overview</h2>
+    <p>
+      This system replaces Old School Essentials&#39; standard initiative rules
+      with an Action Point (AP) system inspired by RuneQuest and Mythras. It
+      adds tactical depth to combat while preserving everything else you love
+      about OSE.
+    </p>
+    <p><strong>What Changes:</strong></p>
+    <ul>
+      <li>Initiative is replaced by Action Points</li>
+      <li>Each round, characters spend AP to take actions</li>
+      <li>Higher AP means acting first; ties resolve simultaneously</li>
+      <li>Multiple actions per round are possible</li>
+    </ul>
+    <p><strong>What Stays the Same:</strong></p>
+    <ul>
+      <li>Attack rolls, Armor Class, and damage</li>
+      <li>Hit Points, saving throws, and death</li>
+      <li>Spells, abilities, and class features</li>
+      <li>Monster stats (except AP replaces initiative)</li>
+    </ul>
+    <p><strong>Why Use This System:</strong></p>
+    <ul>
+      <li>
+        <strong>Tactical choices matter</strong> - When you act depends on what
+        you do and how much AP you have left
+      </li>
+      <li>
+        <strong>Simultaneous combat</strong> - Ties create dramatic mutual
+        strikes and the real risk of trading blows
+      </li>
+      <li>
+        <strong>Team tactics</strong> - Cooperative actions reward coordination
+        (Aid, Guard, Coordinated Attack/Defence)
+      </li>
+      <li>
+        <strong>Resource management</strong> - Balancing speed vs power creates
+        meaningful decisions each round
+      </li>
+      <li>
+        <strong>Fury Pool</strong> - Leftover AP becomes a shared resource for
+        clutch moments
+      </li>
+      <li>
+        <strong>Simple tracking</strong> - Just one number per combatant
+        (current AP)
+      </li>
+    </ul>
+    <hr />
+    <h2>Quick Reference</h2>
+    <h2>Action Points (AP)</h2>
+    <p><strong>Base AP per Round:</strong></p>
+    <ul>
+      <li>Players: 7 AP</li>
+      <li>Monsters: 6 AP (may vary by creature)</li>
+    </ul>
+    <p><strong>Roll for AP (1d6 at start of each round):</strong></p>
+    <table>
+      <thead>
+        <tr>
+          <th align="center">Roll</th>
+          <th align="center">Standard</th>
+          <th align="center">DEX Bonus</th>
+          <th align="center">DEX Penalty</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td align="center">1</td>
+          <td align="center">6 AP</td>
+          <td align="center">6 AP</td>
+          <td align="center">6 AP</td>
+        </tr>
+        <tr>
+          <td align="center">2</td>
+          <td align="center">7 AP</td>
+          <td align="center">7 AP</td>
+          <td align="center">6 AP</td>
+        </tr>
+        <tr>
+          <td align="center">3-4</td>
+          <td align="center">7 AP</td>
+          <td align="center">7 AP</td>
+          <td align="center">7 AP</td>
+        </tr>
+        <tr>
+          <td align="center">5</td>
+          <td align="center">7 AP</td>
+          <td align="center">8 AP</td>
+          <td align="center">7 AP</td>
+        </tr>
+        <tr>
+          <td align="center">6</td>
+          <td align="center">8 AP</td>
+          <td align="center">8 AP</td>
+          <td align="center">8 AP</td>
+        </tr>
+      </tbody>
+    </table>
+    <hr />
+    <h2>Round &amp; Cycle Structure</h2>
+    <p>
+      <strong>Round</strong> = AP refresh to next AP refresh. Contains multiple
+      cycles.
+    </p>
+    <p><strong>Each Cycle:</strong></p>
+    <ol>
+      <li>
+        <strong>Declaration</strong> - All combatants declare ONE action (note
+        cost, don&#39;t deduct yet).
+      </li>
+      <li>
+        <strong>Resolution</strong> - Actions resolve in order of
+        <strong>highest current AP to lowest</strong>. Ties resolve
+        simultaneously (opposed DEX check for movement conflicts).
+      </li>
+      <li>
+        <strong>Deduct</strong> - Subtract AP costs from each participant&#39;s
+        pool.
+      </li>
+    </ol>
+    <p>
+      Repeat cycles until no one has enough AP to act, then start a new round.
+    </p>
+    <p>
+      <em
+        >Your AP determines when you act. Your action choice determines what you
+        have left.</em
+      >
+    </p>
+    <p>
+      <em
+        >Unspent AP does not carry over - but leftover AP can add 1 point to the
+        Fury Pool.</em
+      >
+    </p>
+    <p>
+      <strong>Surprise:</strong> Surprised combatants get half base AP (no
+      variance roll). Players: 3 AP. Monsters: 3 AP.
+    </p>
+    <hr />
+    <h2>Actions</h2>
+    <table>
+      <thead>
+        <tr>
+          <th align="center">AP</th>
+          <th>Action</th>
+          <th>Effect</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td align="center">1</td>
+          <td>Wait</td>
+          <td>Hold or set trigger to interrupt (not in melee)</td>
+        </tr>
+        <tr>
+          <td align="center">2</td>
+          <td>Quick Action</td>
+          <td>Draw/drop weapon, take cover, stand up, open door</td>
+        </tr>
+        <tr>
+          <td align="center">2</td>
+          <td>Move (Half)</td>
+          <td>Half encounter move (max 2 per round)</td>
+        </tr>
+        <tr>
+          <td align="center">2</td>
+          <td>Brace</td>
+          <td>Ready vs charge; free attack if charged (spear/polearm)</td>
+        </tr>
+        <tr>
+          <td align="center">2</td>
+          <td>Unarmed Attack</td>
+          <td>1d2+STR damage</td>
+        </tr>
+        <tr>
+          <td align="center">2</td>
+          <td>Aid</td>
+          <td>Ally gets +2 to next attack OR +2 AC until your next turn</td>
+        </tr>
+        <tr>
+          <td align="center">2</td>
+          <td>Guard</td>
+          <td>Take attacks meant for adjacent ally (use your AC)</td>
+        </tr>
+        <tr>
+          <td align="center">2</td>
+          <td>Coordinated Defence</td>
+          <td>All in formation get +1 AC; pay each round; move together</td>
+        </tr>
+        <tr>
+          <td align="center">2</td>
+          <td>Break Free</td>
+          <td>Escape grapple (STR vs STR or DEX); includes half move</td>
+        </tr>
+        <tr>
+          <td align="center">3</td>
+          <td>Move (Full)</td>
+          <td>Full encounter move</td>
+        </tr>
+        <tr>
+          <td align="center">3</td>
+          <td>Melee Attack</td>
+          <td>Strike adjacent foe (4 AP for two-handed weapons)</td>
+        </tr>
+        <tr>
+          <td align="center">3</td>
+          <td>Ranged Attack</td>
+          <td>Shoot/throw at distant foe</td>
+        </tr>
+        <tr>
+          <td align="center">3</td>
+          <td>Fighting Withdrawal</td>
+          <td>Half move backward, no AC penalty</td>
+        </tr>
+        <tr>
+          <td align="center">3</td>
+          <td>Grapple</td>
+          <td>Opposed STR; win = grapple, lose = action wasted</td>
+        </tr>
+        <tr>
+          <td align="center">4</td>
+          <td>Cast Spell</td>
+          <td>Cast a prepared spell</td>
+        </tr>
+        <tr>
+          <td align="center">4</td>
+          <td>Retreat</td>
+          <td>Full move backward, foes get +2 to hit you</td>
+        </tr>
+        <tr>
+          <td align="center">4</td>
+          <td>Coordinated Attack</td>
+          <td>
+            Attack with allies vs same target; +1 to hit, +1 damage per extra
+            attacker
+          </td>
+        </tr>
+        <tr>
+          <td align="center">5</td>
+          <td>Aimed Shot</td>
+          <td>Ranged attack with +2 to hit</td>
+        </tr>
+        <tr>
+          <td align="center">5</td>
+          <td>Charge</td>
+          <td>Full move + attack, +2 to hit, -2 AC until next turn</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      <strong>Grappling:</strong> Requires a free hand (no two-handed weapons or
+      sword-and-shield). While grappling, neither can move or attack others.
+      Unarmed attacks only. Both at -2 AC from outside attacks.
+    </p>
+    <p>
+      <strong>Wait &amp; Interrupt:</strong> Declare a trigger (e.g., &quot;if
+      the orc charges, I attack&quot;). When triggered, you interrupt and act
+      first, then pay your action&#39;s AP cost. Must have enough AP remaining.
+      Cannot Wait while in melee.
+    </p>
+    <p>
+      <strong>Monster Opposed Checks:</strong> Monsters use HD as their modifier
+      (d20+HD) for grapple, break free, and movement contests.
+    </p>
+    <hr />
+    <h2>Fury Pool</h2>
+    <p>
+      Communal pool shared by all players (monsters do not contribute or spend).
+      At round end, each player with leftover AP may add 1 to the pool. Spend at
+      any time:
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th align="center">Cost</th>
+          <th>Effect</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td align="center">1</td>
+          <td>+1 damage to a successful attack</td>
+        </tr>
+        <tr>
+          <td align="center">2</td>
+          <td>-1 damage from incoming attack</td>
+        </tr>
+        <tr>
+          <td align="center">3</td>
+          <td>+1 AP to your current pool</td>
+        </tr>
+      </tbody>
+    </table>
+    <hr />
+    <h2>Example of Play</h2>
+    <p>
+      <em
+        >Sarah plays <strong>Kael Ironhand</strong>, a fighter with sword and
+        shield (AC 4, STR +1). Marcus plays <strong>Zara the Unseen</strong>, a
+        magic-user (AC 8, DEX bonus). They face two
+        <strong>Temple Guardians</strong> - 4 HD undead warriors wielding
+        ceremonial halberds (two-handed).</em
+      >
+    </p>
+    <hr />
+    <p>
+      <strong>The Scene:</strong> The Sunken Temple of Koth-Azur. Phosphorescent
+      fungi cast sickly green light across broken pillars and a cracked obsidian
+      floor. The adventurers stand at the chamber&#39;s entrance. Forty feet
+      away, flanking a sealed bronze door, two skeletal warriors in corroded
+      ceremonial armor raise their halberds, eye sockets blazing with violet
+      fire.
+    </p>
+    <p>
+      <strong>GM:</strong> &quot;The Guardians step forward, halberds leveled.
+      Roll for AP - new round.&quot;
+    </p>
+    <p>
+      Sarah rolls a 5 for Kael. With no DEX modifier: <strong>7 AP</strong>.
+      Marcus rolls a 6 for Zara. With DEX bonus: <strong>8 AP</strong>. The
+      Guardians have fixed <strong>6 AP</strong> each.
+    </p>
+    <hr />
+    <h3>Round 1, Cycle 1</h3>
+    <p><strong>GM:</strong> &quot;Declare actions.&quot;</p>
+    <p>
+      <strong>Sarah:</strong> &quot;Kael charges the nearest Guardian!&quot;
+      (Charge - 5 AP)
+    </p>
+    <p>
+      <strong>Marcus:</strong> &quot;Zara holds back - she Waits, trigger: if a
+      Guardian attacks Kael, she casts <em>Magic Missile</em>.&quot; (Wait - 1
+      AP)
+    </p>
+    <p>
+      <strong>GM:</strong> &quot;Guardian A advances on Kael with halberd
+      raised. Guardian B moves to flank.&quot; (Both Full Move - 3 AP)
+    </p>
+    <p>
+      <strong>Resolution order:</strong> Zara (8 AP), Kael (7 AP), then both
+      Guardians (6 AP).
+    </p>
+    <p>
+      Zara&#39;s Wait doesn&#39;t trigger yet - no attack declared. Kael&#39;s
+      charge carries him across the cracked floor, slamming into Guardian A. He
+      rolls 15 + 1 STR = 16, hitting AC 5. The Guardian is AC 5 - hit! Kael
+      rolls 7 damage. Bones splinter as his blade bites deep. The Guardians
+      complete their movement, flanking positions around Kael.
+    </p>
+    <p>
+      <strong>Deduct AP:</strong> Kael 7→2, Zara 8→7, Guardian A 6→3, Guardian B
+      6→3.
+    </p>
+    <p>
+      <em
+        >Kael is now -2 AC from his Charge until next round (currently AC
+        6).</em
+      >
+    </p>
+    <hr />
+    <h3>Round 1, Cycle 2</h3>
+    <p><strong>GM:</strong> &quot;Cycle 2. Declare.&quot;</p>
+    <p>
+      <strong>Sarah:</strong> &quot;2 AP left... Kael takes a Quick Action to
+      position his shield against Guardian B.&quot; (Quick Action - 2 AP)
+    </p>
+    <p>
+      <strong>Marcus:</strong> &quot;Zara still Waits with the same
+      trigger.&quot; (Wait - 1 AP)
+    </p>
+    <p>
+      <strong>GM:</strong> &quot;Guardian A attacks Kael with its halberd!&quot;
+      (Melee Attack, two-handed - 4 AP, but it only has 3 AP!)
+    </p>
+    <p>
+      <strong>GM:</strong> &quot;Wait - Guardian A only has 3 AP. It can&#39;t
+      attack with a two-handed weapon. It uses Fighting Withdrawal instead,
+      pulling back.&quot; (Fighting Withdrawal - 3 AP)
+    </p>
+    <p>
+      &quot;Guardian B attacks Kael!&quot; (Melee Attack - 4 AP, but it also
+      only has 3 AP!)
+    </p>
+    <p>
+      <strong>GM:</strong> &quot;Neither Guardian can attack - halberds cost 4
+      AP and they only have 3. Guardian A withdraws. Guardian B also withdraws,
+      circling.&quot;
+    </p>
+    <p>
+      <strong>Marcus:</strong> &quot;Zara&#39;s trigger never fired. She keeps
+      the Wait and still has 6 AP.&quot;
+    </p>
+    <p>
+      <strong>Resolution:</strong> Zara (6 AP), Guardian A (3 AP), Guardian B (3
+      AP), Kael (2 AP).
+    </p>
+    <p>
+      Zara continues watching. Both Guardians withdraw half their movement,
+      repositioning near the bronze door. Kael steadies his shield.
+    </p>
+    <p>
+      <strong>Deduct AP:</strong> Kael 2→0, Zara 6→5, Guardian A 3→0, Guardian B
+      3→0.
+    </p>
+    <hr />
+    <h3>End of Round 1</h3>
+    <p>Kael and both Guardians have 0 AP. Zara has 5 AP remaining.</p>
+    <p>
+      <strong>GM:</strong> &quot;Zara, you have AP left. One more cycle?&quot;
+    </p>
+    <p>
+      <strong>Marcus:</strong> &quot;Zara steps forward and hurls a
+      <em>Magic Missile</em> at Guardian A!&quot; (Full Move - 3 AP, Cast Spell
+      - 4 AP = 7 AP total. She only has 5!)
+    </p>
+    <p>
+      <strong>Marcus:</strong> &quot;Scratch that - Half Move toward Kael, then
+      cast.&quot; (Half Move 2 AP + Cast Spell 4 AP = 6 AP. Still too much!)
+    </p>
+    <p>
+      <strong>Marcus:</strong> &quot;Fine - she just casts from here.&quot;
+      (Cast Spell - 4 AP)
+    </p>
+    <p>
+      <strong>Resolution:</strong> The silvery bolt streaks across the chamber,
+      automatic hit. 5 damage. Guardian A&#39;s ribcage explodes. It crumbles.
+    </p>
+    <p><strong>Deduct AP:</strong> Zara 5→1.</p>
+    <p>
+      <strong>GM:</strong> &quot;Zara, you have 1 AP left. Not enough for
+      another action.&quot;
+    </p>
+    <p>
+      <strong>Marcus:</strong> &quot;She holds position, keeping her eyes on the
+      remaining Guardian.&quot;
+    </p>
+    <p>
+      <strong>Fury Pool:</strong> Zara&#39;s leftover 1 AP goes into the Fury
+      Pool. The party now has <strong>1 Fury</strong>.
+    </p>
+    <hr />
+    <h3>Round 2</h3>
+    <p>
+      <strong>GM:</strong> &quot;New round. AP refreshes. Roll variance.&quot;
+    </p>
+    <p>
+      Sarah rolls a 1 for Kael. <strong>6 AP</strong> (bad luck!). Marcus rolls
+      a 3 for Zara. With DEX bonus, still just <strong>7 AP</strong>. Guardian
+      B: <strong>6 AP</strong>.
+    </p>
+    <p>Kael&#39;s Charge penalty ends. He&#39;s back to AC 4.</p>
+    <p>
+      <strong>GM:</strong> &quot;One Guardian remains, backing toward the sealed
+      door. It hisses in a long-dead language. Declare.&quot;
+    </p>
+    <p>
+      <strong>Sarah:</strong> &quot;Kael advances and attacks!&quot; (Full Move
+      3 AP + Melee Attack 3 AP = 6 AP)
+    </p>
+    <p>
+      <strong>Marcus:</strong> &quot;Zara uses Aid - she shouts a warning about
+      the Guardian&#39;s halberd reach, giving Kael +2 to hit!&quot; (Aid - 2
+      AP)
+    </p>
+    <p>
+      <strong>GM:</strong> &quot;The Guardian braces its halberd against
+      Kael&#39;s charge!&quot; (Brace - 2 AP)
+    </p>
+    <p>
+      <strong>Resolution order:</strong> Zara (7 AP), Kael and Guardian B (both
+      6 AP - simultaneous!)
+    </p>
+    <p>
+      Zara&#39;s shout rings out: &quot;Watch the reach, Kael!&quot; (+2 to
+      Kael&#39;s next attack)
+    </p>
+    <p>
+      Kael and the Guardian act simultaneously. But wait - the Guardian Braced,
+      and Kael is moving in. Does this trigger?
+    </p>
+    <p>
+      <strong>GM:</strong> &quot;Kael, you&#39;re moving in to attack -
+      that&#39;s not a Charge action, just Full Move + Attack. The Brace only
+      triggers on Charges. The Guardian wasted its Brace!&quot;
+    </p>
+    <p>
+      Kael swings with his Aid bonus: rolls 11 + 1 STR + 2 Aid = 14, hitting AC
+      5. Hit! He rolls damage: 5.
+    </p>
+    <p>
+      <strong>Sarah:</strong> &quot;That&#39;s only 10 total damage on this one.
+      Four hit dice - it&#39;s probably still up.&quot;
+    </p>
+    <p>
+      <strong>Marcus:</strong> &quot;Spend our Fury point. Put it down.&quot;
+    </p>
+    <p><strong>Sarah:</strong> &quot;Spending 1 Fury for +1 damage!&quot;</p>
+    <p><strong>Fury Pool:</strong> 1 → 0.</p>
+    <p>
+      Six damage. Kael&#39;s blade catches the Guardian beneath its jaw,
+      wrenching upward with every ounce of strength. The skull splits. It
+      collapses in a heap of ancient bone and rusted armor.
+    </p>
+    <p><strong>Deduct AP:</strong> Kael 6→0, Zara 7→5, Guardian B destroyed.</p>
+    <hr />
+    <p>
+      <strong>GM:</strong> &quot;The chamber falls silent. Violet fire fades
+      from the Guardian&#39;s eye sockets. Before you, the sealed bronze door
+      waits, covered in warnings written in a language that predates the
+      kingdoms of men.&quot;
+    </p>
+    <p>
+      <strong>Sarah:</strong> &quot;Kael wipes his blade on his cloak. &#39;Good
+      call on that warning, Zara.&#39;&quot;
+    </p>
+    <p>
+      <strong>Marcus:</strong> &quot;She&#39;s already studying the door.
+      &#39;Save the thanks. Whatever they were guarding is still in
+      there.&#39;&quot;
+    </p>
+    <hr />
+    <p>
+      <em
+        >Compatible with Old School Essentials. All other rules (attack rolls,
+        AC, damage, saves) unchanged.</em
+      >
+    </p>
+  </body>
 </html>

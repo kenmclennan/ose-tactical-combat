@@ -1,0 +1,16 @@
+{
+  "name": "OSE Tactical Initiative",
+  "version": "0.1.0",
+  "manifest_version": 1,
+  "author": "Ken McLennan",
+  "description": "AP-based tactical initiative tracker for Old School Essentials",
+  "icon": "/icon.svg",
+  "action": {
+    "title": "Tactical Initiative",
+    "icon": "/icon.svg",
+    "popover": "/",
+    "height": 600,
+    "width": 380
+  },
+  "background_url": "/background.html"
+}
