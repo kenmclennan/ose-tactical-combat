@@ -248,15 +248,22 @@ export function bindSetupEvents(
   isGM: boolean,
 ): void {
   container.addEventListener("click", (e) => {
+    console.log("Setup click event:", e.target, "data-action:", (e.target as HTMLElement).closest("[data-action]"));
+
     // Check if clicking on modal overlay (not the modal content itself)
     const clickedElement = e.target as HTMLElement;
     if (clickedElement.hasAttribute("data-modal-overlay")) {
+      console.log("Closing modal via overlay click");
       closeModal(container);
       return;
     }
 
     const target = clickedElement.closest("[data-action]") as HTMLElement | null;
-    if (!target) return;
+    if (!target) {
+      console.log("No target with data-action found");
+      return;
+    }
+    console.log("Found action:", target.dataset.action);
 
     const action = target.dataset.action;
     const id = target.dataset.id;
