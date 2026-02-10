@@ -3,6 +3,7 @@ import { PLAYER_BASE_AP, MONSTER_BASE_AP } from "../../util/constants";
 import { generateId } from "../../util/ids";
 import { saveState } from "../../state/store";
 import { getPlayerCombatants, getMonsterCombatants } from "../../state/selectors";
+import { showModal, closeModal } from "../modal";
 
 export function renderSetupView(
   state: CombatState,
@@ -247,23 +248,11 @@ export function bindSetupEvents(
   playerId: string,
   isGM: boolean,
 ): void {
+  console.log("bindSetupEvents called, container:", container);
+
   container.addEventListener("click", (e) => {
-    console.log("Setup click event:", e.target, "data-action:", (e.target as HTMLElement).closest("[data-action]"));
-
-    // Check if clicking on modal overlay (not the modal content itself)
-    const clickedElement = e.target as HTMLElement;
-    if (clickedElement.hasAttribute("data-modal-overlay")) {
-      console.log("Closing modal via overlay click");
-      closeModal(container);
-      return;
-    }
-
-    const target = clickedElement.closest("[data-action]") as HTMLElement | null;
-    if (!target) {
-      console.log("No target with data-action found");
-      return;
-    }
-    console.log("Found action:", target.dataset.action);
+    const target = (e.target as HTMLElement).closest("[data-action]") as HTMLElement | null;
+    if (!target) return;
 
     const action = target.dataset.action;
     const id = target.dataset.id;
@@ -271,22 +260,13 @@ export function bindSetupEvents(
 
     switch (action) {
       case "add-combatant":
-        if (side) showAddModal(container, side);
+        if (side) showAddModalHandler(state, side, playerId);
         break;
       case "edit-combatant":
-        if (id) showEditModal(container, state, id, isGM);
+        if (id) showEditModalHandler(state, id, isGM, playerId);
         break;
       case "remove-combatant":
         if (id && isGM) removeCombatant(state, id);
-        break;
-      case "close-modal":
-        closeModal(container);
-        break;
-      case "create-combatant":
-        if (side) createCombatant(container, state, side, playerId);
-        break;
-      case "save-combatant":
-        if (id) saveCombatant(container, state, id, isGM);
         break;
       case "start-combat":
         if (isGM) startCombat(state, playerId);
@@ -295,45 +275,38 @@ export function bindSetupEvents(
   });
 }
 
-function showAddModal(container: HTMLElement, side: CombatantSide): void {
-  let modal = container.querySelector(".modal-overlay");
-  if (modal) modal.remove();
-  container.insertAdjacentHTML("beforeend", renderAddModal(side));
-  const nameInput = container.querySelector("#edit-name") as HTMLInputElement | null;
-  nameInput?.select();
+function showAddModalHandler(state: CombatState, side: CombatantSide, playerId: string): void {
+  showModal(renderAddModal(side), (action, data) => {
+    if (action === "create-combatant") {
+      createCombatantFromModal(state, side, playerId);
+      closeModal();
+    }
+  });
 }
 
-function showEditModal(
-  container: HTMLElement,
-  state: CombatState,
-  id: string,
-  isGM: boolean,
-): void {
+function showEditModalHandler(state: CombatState, id: string, isGM: boolean, playerId: string): void {
   const c = state.combatants.find((c) => c.id === id);
   if (!c) return;
-  let modal = container.querySelector(".modal-overlay");
-  if (modal) modal.remove();
-  container.insertAdjacentHTML("beforeend", renderEditModal(c, isGM));
+  showModal(renderEditModal(c, isGM), (action, data) => {
+    if (action === "save-combatant") {
+      saveCombatantFromModal(state, id, isGM);
+      closeModal();
+    }
+  });
 }
 
-function closeModal(container: HTMLElement): void {
-  const modal = container.querySelector(".modal-overlay");
-  if (modal) modal.remove();
-}
-
-function createCombatant(
-  container: HTMLElement,
+function createCombatantFromModal(
   state: CombatState,
   side: CombatantSide,
   playerId: string,
 ): void {
-  const name = (container.querySelector("#edit-name") as HTMLInputElement)?.value?.trim() || "Unknown";
-  const hpMax = parseInt((container.querySelector("#edit-hp-max") as HTMLInputElement)?.value) || 8;
-  const ac = parseInt((container.querySelector("#edit-ac") as HTMLInputElement)?.value) || 9;
-  const thac0 = parseInt((container.querySelector("#edit-thac0") as HTMLInputElement)?.value) || 19;
-  const dex = (container.querySelector("#edit-dex") as HTMLSelectElement)?.value as DexCategory || "standard";
-  const apBase = parseInt((container.querySelector("#edit-ap-base") as HTMLInputElement)?.value) || (side === "monster" ? MONSTER_BASE_AP : PLAYER_BASE_AP);
-  const apVariance = (container.querySelector("#edit-ap-variance") as HTMLInputElement)?.checked ?? (side === "player");
+  const name = (document.querySelector("#edit-name") as HTMLInputElement)?.value?.trim() || "Unknown";
+  const hpMax = parseInt((document.querySelector("#edit-hp-max") as HTMLInputElement)?.value) || 8;
+  const ac = parseInt((document.querySelector("#edit-ac") as HTMLInputElement)?.value) || 9;
+  const thac0 = parseInt((document.querySelector("#edit-thac0") as HTMLInputElement)?.value) || 19;
+  const dex = (document.querySelector("#edit-dex") as HTMLSelectElement)?.value as DexCategory || "standard";
+  const apBase = parseInt((document.querySelector("#edit-ap-base") as HTMLInputElement)?.value) || (side === "monster" ? MONSTER_BASE_AP : PLAYER_BASE_AP);
+  const apVariance = (document.querySelector("#edit-ap-variance") as HTMLInputElement)?.checked ?? (side === "player");
 
   const combatant: Combatant = {
     id: generateId(),
@@ -355,8 +328,7 @@ function createCombatant(
   saveState(updated);
 }
 
-function saveCombatant(
-  container: HTMLElement,
+function saveCombatantFromModal(
   state: CombatState,
   id: string,
   isGM: boolean,
@@ -364,12 +336,12 @@ function saveCombatant(
   const c = state.combatants.find((c) => c.id === id);
   if (!c) return;
 
-  const name = (container.querySelector("#edit-name") as HTMLInputElement)?.value?.trim() || c.name;
-  const hpCurrent = parseInt((container.querySelector("#edit-hp") as HTMLInputElement)?.value) ?? c.stats.hpCurrent;
-  const hpMax = parseInt((container.querySelector("#edit-hp-max") as HTMLInputElement)?.value) || c.stats.hpMax;
-  const ac = parseInt((container.querySelector("#edit-ac") as HTMLInputElement)?.value) ?? c.stats.ac;
-  const thac0 = parseInt((container.querySelector("#edit-thac0") as HTMLInputElement)?.value) || c.stats.thac0;
-  const dex = (container.querySelector("#edit-dex") as HTMLSelectElement)?.value as DexCategory || c.dexCategory;
+  const name = (document.querySelector("#edit-name") as HTMLInputElement)?.value?.trim() || c.name;
+  const hpCurrent = parseInt((document.querySelector("#edit-hp") as HTMLInputElement)?.value) ?? c.stats.hpCurrent;
+  const hpMax = parseInt((document.querySelector("#edit-hp-max") as HTMLInputElement)?.value) || c.stats.hpMax;
+  const ac = parseInt((document.querySelector("#edit-ac") as HTMLInputElement)?.value) ?? c.stats.ac;
+  const thac0 = parseInt((document.querySelector("#edit-thac0") as HTMLInputElement)?.value) || c.stats.thac0;
+  const dex = (document.querySelector("#edit-dex") as HTMLSelectElement)?.value as DexCategory || c.dexCategory;
 
   const updated: Combatant = {
     ...c,
@@ -379,9 +351,9 @@ function saveCombatant(
   };
 
   if (isGM) {
-    const apBase = parseInt((container.querySelector("#edit-ap-base") as HTMLInputElement)?.value) || c.apBase;
-    const apVariance = (container.querySelector("#edit-ap-variance") as HTMLInputElement)?.checked ?? c.apVariance;
-    const surprised = (container.querySelector("#edit-surprised") as HTMLInputElement)?.checked ?? c.surprised;
+    const apBase = parseInt((document.querySelector("#edit-ap-base") as HTMLInputElement)?.value) || c.apBase;
+    const apVariance = (document.querySelector("#edit-ap-variance") as HTMLInputElement)?.checked ?? c.apVariance;
+    const surprised = (document.querySelector("#edit-surprised") as HTMLInputElement)?.checked ?? c.surprised;
     updated.apBase = apBase;
     updated.apVariance = apVariance;
     updated.surprised = surprised;
