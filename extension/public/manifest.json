@@ -4,13 +4,13 @@
   "manifest_version": 1,
   "author": "Ken McLennan",
   "description": "AP-based tactical initiative tracker for Old School Essentials",
-  "icon": "/icon.svg",
+  "icon": "./icon.svg",
   "action": {
     "title": "Tactical Initiative",
-    "icon": "/icon.svg",
-    "popover": "/",
+    "icon": "./icon.svg",
+    "popover": "./index.html",
     "height": 600,
     "width": 380
   },
-  "background_url": "/background.html"
+  "background_url": "./background.html"
 }
