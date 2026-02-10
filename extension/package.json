@@ -1,6 +1,6 @@
 {
   "name": "ose-tactical-initiative",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "OSE Tactical Initiative System - Owlbear Rodeo Extension",
   "type": "module",

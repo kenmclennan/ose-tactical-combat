@@ -105,8 +105,8 @@ export function renderEditModal(c: Combatant, isGM: boolean): string {
   const isMonster = c.side === "monster";
 
   return `
-    <div class="modal-overlay" data-action="close-modal">
-      <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-overlay" data-modal-overlay="true">
+      <div class="modal">
         <div class="modal-header">
           <span class="modal-title">Edit ${escapeHtml(c.name)}</span>
           <button class="btn-icon" data-action="close-modal">&#x2715;</button>
@@ -248,7 +248,14 @@ export function bindSetupEvents(
   isGM: boolean,
 ): void {
   container.addEventListener("click", (e) => {
-    const target = (e.target as HTMLElement).closest("[data-action]") as HTMLElement | null;
+    // Check if clicking on modal overlay (not the modal content itself)
+    const clickedElement = e.target as HTMLElement;
+    if (clickedElement.hasAttribute("data-modal-overlay")) {
+      closeModal(container);
+      return;
+    }
+
+    const target = clickedElement.closest("[data-action]") as HTMLElement | null;
     if (!target) return;
 
     const action = target.dataset.action;
