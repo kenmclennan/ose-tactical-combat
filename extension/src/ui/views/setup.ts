@@ -183,8 +183,8 @@ export function renderAddModal(side: CombatantSide): string {
   const defaultName = isMonster ? "Monster" : "Character";
 
   return `
-    <div class="modal-overlay" data-action="close-modal">
-      <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-overlay" data-modal-overlay="true">
+      <div class="modal">
         <div class="modal-header">
           <span class="modal-title">Add ${isMonster ? "Monster" : "Player"}</span>
           <button class="btn-icon" data-action="close-modal">&#x2715;</button>
