@@ -1,5 +1,5 @@
 import type { CombatState } from "../../types";
-import { saveState, clearState } from "../../state/store";
+import { saveState } from "../../state/store";
 import { getActiveCombatants, getPlayerCombatants, getCurrentAp } from "../../state/selectors";
 import { calculateFuryBanked } from "../../rules/fury";
 
@@ -45,7 +45,6 @@ export function renderRoundEndView(
       ${isGM ? `
         <div class="round-end-actions">
           <button class="btn btn-primary btn-full" data-action="next-round">Next Round</button>
-          <button class="btn btn-secondary btn-full" data-action="end-combat">End Combat</button>
         </div>
       ` : `
         <div class="hint">Waiting for GM...</div>
@@ -71,9 +70,6 @@ export function bindRoundEndEvents(
 
     if (action === "next-round" && isGM) {
       nextRound(state);
-    }
-    if (action === "end-combat" && isGM) {
-      clearState();
     }
   });
 }

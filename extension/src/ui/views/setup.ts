@@ -1,4 +1,5 @@
 import type { CombatState, Combatant, CombatantSide, DexCategory } from "../../types";
+import type { PartyPlayer } from "../renderer";
 import { PLAYER_BASE_AP, MONSTER_BASE_AP } from "../../util/constants";
 import { generateId } from "../../util/ids";
 import { saveState } from "../../state/store";
@@ -9,6 +10,7 @@ export function renderSetupView(
   state: CombatState,
   playerId: string,
   isGM: boolean,
+  _partyPlayers: PartyPlayer[] = [],
 ): string {
   const players = getPlayerCombatants(state);
   const monsters = getMonsterCombatants(state);
@@ -100,10 +102,25 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+function renderOwnerDropdown(partyPlayers: PartyPlayer[], currentOwnerId?: string): string {
+  const options = partyPlayers.map((p) =>
+    `<option value="${escapeHtml(p.id)}" ${p.id === currentOwnerId ? "selected" : ""}>${escapeHtml(p.name)}</option>`
+  ).join("");
+
+  return `
+    <div class="form-row">
+      <label>Assign to Player</label>
+      <select id="edit-owner">
+        ${options}
+      </select>
+    </div>
+  `;
+}
+
 // --- Edit modal ---
 
-export function renderEditModal(c: Combatant, isGM: boolean): string {
-  const isMonster = c.side === "monster";
+export function renderEditModal(c: Combatant, isGM: boolean, partyPlayers: PartyPlayer[] = []): string {
+  const showOwnerDropdown = isGM && c.side === "player";
 
   return `
     <div class="modal-overlay" data-modal-overlay="true">
@@ -117,6 +134,7 @@ export function renderEditModal(c: Combatant, isGM: boolean): string {
             <label>Name</label>
             <input type="text" id="edit-name" value="${escapeHtml(c.name)}" ${isGM ? "" : "disabled"} />
           </div>
+          ${showOwnerDropdown ? renderOwnerDropdown(partyPlayers, c.ownerId) : ""}
           <div class="form-row-group">
             <div class="form-row">
               <label>HP</label>
@@ -177,10 +195,11 @@ export function renderEditModal(c: Combatant, isGM: boolean): string {
 
 // --- Add modal ---
 
-export function renderAddModal(side: CombatantSide): string {
+export function renderAddModal(side: CombatantSide, isGM: boolean, partyPlayers: PartyPlayer[] = []): string {
   const isMonster = side === "monster";
   const defaultAp = isMonster ? MONSTER_BASE_AP : PLAYER_BASE_AP;
   const defaultName = isMonster ? "Monster" : "Character";
+  const showOwnerDropdown = isGM && side === "player";
 
   return `
     <div class="modal-overlay" data-modal-overlay="true">
@@ -194,6 +213,7 @@ export function renderAddModal(side: CombatantSide): string {
             <label>Name</label>
             <input type="text" id="edit-name" value="${defaultName}" />
           </div>
+          ${showOwnerDropdown ? renderOwnerDropdown(partyPlayers) : ""}
           <div class="form-row-group">
             <div class="form-row">
               <label>HP Max</label>
@@ -247,9 +267,8 @@ export function bindSetupEvents(
   state: CombatState,
   playerId: string,
   isGM: boolean,
+  partyPlayers: PartyPlayer[] = [],
 ): void {
-  console.log("bindSetupEvents called, container:", container);
-
   container.addEventListener("click", (e) => {
     const target = (e.target as HTMLElement).closest("[data-action]") as HTMLElement | null;
     if (!target) return;
@@ -260,10 +279,10 @@ export function bindSetupEvents(
 
     switch (action) {
       case "add-combatant":
-        if (side) showAddModalHandler(state, side, playerId);
+        if (side) showAddModalHandler(state, side, playerId, isGM, partyPlayers);
         break;
       case "edit-combatant":
-        if (id) showEditModalHandler(state, id, isGM, playerId);
+        if (id) showEditModalHandler(state, id, isGM, playerId, partyPlayers);
         break;
       case "remove-combatant":
         if (id && isGM) removeCombatant(state, id);
@@ -275,8 +294,8 @@ export function bindSetupEvents(
   });
 }
 
-function showAddModalHandler(state: CombatState, side: CombatantSide, playerId: string): void {
-  showModal(renderAddModal(side), (action, data) => {
+function showAddModalHandler(state: CombatState, side: CombatantSide, playerId: string, isGM: boolean, partyPlayers: PartyPlayer[]): void {
+  showModal(renderAddModal(side, isGM, partyPlayers), (action, data) => {
     if (action === "create-combatant") {
       createCombatantFromModal(state, side, playerId);
       closeModal();
@@ -284,10 +303,10 @@ function showAddModalHandler(state: CombatState, side: CombatantSide, playerId: 
   });
 }
 
-function showEditModalHandler(state: CombatState, id: string, isGM: boolean, playerId: string): void {
+function showEditModalHandler(state: CombatState, id: string, isGM: boolean, playerId: string, partyPlayers: PartyPlayer[]): void {
   const c = state.combatants.find((c) => c.id === id);
   if (!c) return;
-  showModal(renderEditModal(c, isGM), (action, data) => {
+  showModal(renderEditModal(c, isGM, partyPlayers), (action, data) => {
     if (action === "save-combatant") {
       saveCombatantFromModal(state, id, isGM);
       closeModal();
@@ -308,6 +327,11 @@ function createCombatantFromModal(
   const apBase = parseInt((document.querySelector("#edit-ap-base") as HTMLInputElement)?.value) || (side === "monster" ? MONSTER_BASE_AP : PLAYER_BASE_AP);
   const apVariance = (document.querySelector("#edit-ap-variance") as HTMLInputElement)?.checked ?? (side === "player");
 
+  const ownerSelect = document.querySelector("#edit-owner") as HTMLSelectElement | null;
+  const ownerId = side === "player"
+    ? (ownerSelect?.value || playerId)
+    : undefined;
+
   const combatant: Combatant = {
     id: generateId(),
     name,
@@ -318,7 +342,7 @@ function createCombatantFromModal(
     apBase,
     apVariance,
     surprised: false,
-    ownerId: side === "player" ? playerId : undefined,
+    ownerId,
   };
 
   const updated: CombatState = {
@@ -357,6 +381,11 @@ function saveCombatantFromModal(
     updated.apBase = apBase;
     updated.apVariance = apVariance;
     updated.surprised = surprised;
+
+    const ownerSelect = document.querySelector("#edit-owner") as HTMLSelectElement | null;
+    if (ownerSelect) {
+      updated.ownerId = ownerSelect.value || undefined;
+    }
   }
 
   const newState: CombatState = {

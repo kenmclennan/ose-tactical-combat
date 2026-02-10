@@ -1,6 +1,7 @@
 import OBR, { type Theme } from "@owlbear-rodeo/sdk";
 import { loadState, subscribe, initSync } from "./state/store";
 import { render } from "./ui/renderer";
+import type { PartyPlayer } from "./ui/renderer";
 import type { CombatState } from "./types";
 
 const app = document.getElementById("app");
@@ -9,9 +10,10 @@ if (!app) throw new Error("Missing #app element");
 let playerId = "";
 let playerRole = "";
 let connected = false;
+let partyPlayers: PartyPlayer[] = [];
 
 function doRender(state: CombatState | null): void {
-  render(app!, { state, playerId, playerRole, connected });
+  render(app!, { state, playerId, playerRole, connected, partyPlayers });
 }
 
 OBR.onReady(async () => {
@@ -23,6 +25,25 @@ OBR.onReady(async () => {
   const theme = await OBR.theme.getTheme();
   applyTheme(theme);
   OBR.theme.onChange(applyTheme);
+
+  // Track party players for owner assignment
+  const currentName = await OBR.player.getName();
+  partyPlayers = [{ id: playerId, name: currentName }];
+
+  const otherPlayers = await OBR.party.getPlayers();
+  partyPlayers = [
+    { id: playerId, name: currentName },
+    ...otherPlayers.map((p) => ({ id: p.id, name: p.name })),
+  ];
+
+  OBR.party.onChange((players) => {
+    partyPlayers = [
+      { id: playerId, name: currentName },
+      ...players.map((p) => ({ id: p.id, name: p.name })),
+    ];
+    // Re-render with updated player list
+    loadState().then(doRender);
+  });
 
   // Load initial state and start syncing
   const state = await loadState();

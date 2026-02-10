@@ -17,11 +17,17 @@ const PHASE_LABELS: Record<CombatPhase, string> = {
   "combat-end": "Combat End",
 };
 
+export interface PartyPlayer {
+  id: string;
+  name: string;
+}
+
 export interface RenderContext {
   state: CombatState | null;
   playerId: string;
   playerRole: string;
   connected: boolean;
+  partyPlayers: PartyPlayer[];
 }
 
 export function render(app: HTMLElement, ctx: RenderContext): void {
@@ -94,30 +100,50 @@ function renderPhaseContent(ctx: RenderContext): string {
     `;
   }
 
+  let phaseHtml: string;
   switch (state.phase) {
     case "setup":
-      return renderSetupView(state, playerId, isGM);
+      phaseHtml = renderSetupView(state, playerId, isGM, ctx.partyPlayers);
+      break;
     case "round-start":
-      return renderRoundStartView(state, playerId, isGM);
+      phaseHtml = renderRoundStartView(state, playerId, isGM);
+      break;
     case "declaration":
-      return renderDeclarationView(state, playerId, isGM);
+      phaseHtml = renderDeclarationView(state, playerId, isGM);
+      break;
     case "resolution":
-      return renderResolutionView(state, playerId, isGM);
+      phaseHtml = renderResolutionView(state, playerId, isGM);
+      break;
     case "cycle-end":
-      return renderResolutionView(state, playerId, isGM);
+      phaseHtml = renderResolutionView(state, playerId, isGM);
+      break;
     case "round-end":
-      return renderRoundEndView(state, playerId, isGM);
+      phaseHtml = renderRoundEndView(state, playerId, isGM);
+      break;
     case "combat-end":
-      return `
+      phaseHtml = `
         <div class="empty-state">
           <div class="empty-state-icon">&#x2694;</div>
           <div>Combat has ended</div>
           ${isGM ? `<button class="btn btn-primary" data-action="new-combat" style="margin-top: 12px;">New Combat</button>` : ""}
         </div>
       `;
+      break;
     default:
-      return `<div class="empty-state">Unknown phase</div>`;
+      phaseHtml = `<div class="empty-state">Unknown phase</div>`;
   }
+
+  // Append persistent "End Combat" footer for GM during active combat phases
+  const showEndCombat = isGM && state.phase !== "setup" && state.phase !== "combat-end";
+  if (showEndCombat) {
+    phaseHtml += `
+      <div class="combat-footer">
+        <button class="btn btn-secondary btn-full" data-action="end-combat">End Combat</button>
+      </div>
+    `;
+  }
+
+  return phaseHtml;
 }
 
 function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
@@ -151,7 +177,7 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
   // Phase-specific events
   switch (state.phase) {
     case "setup":
-      bindSetupEvents(content, state, playerId, isGM);
+      bindSetupEvents(content, state, playerId, isGM, ctx.partyPlayers);
       break;
     case "round-start":
       bindRoundStartEvents(content, state, playerId, isGM);
