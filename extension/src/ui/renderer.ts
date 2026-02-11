@@ -136,16 +136,6 @@ function renderPhaseContent(ctx: RenderContext): string {
       phaseHtml = `<div class="empty-state">Unknown phase</div>`;
   }
 
-  // GM add combatant buttons during active combat
-  const showAdd = isGM && state.phase !== "setup" && state.phase !== "combat-end";
-  if (showAdd) {
-    phaseHtml += `
-      <div class="add-combatant-bar">
-        <button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="player">+ Player</button>
-        <button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="monster">+ Monster</button>
-      </div>
-    `;
-  }
 
   // Persistent fury panel - show during all combat phases
   const showFury = state.phase !== "setup" && state.phase !== "combat-end";

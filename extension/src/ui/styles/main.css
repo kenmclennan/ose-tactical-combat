@@ -952,18 +952,6 @@ input[type="checkbox"] {
   gap: 6px;
 }
 
-/* --- Add Combatant Bar --- */
-
-.add-combatant-bar {
-  display: flex;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.add-combatant-bar .btn {
-  flex: 1;
-}
-
 /* --- Combat Footer --- */
 
 .combat-footer {

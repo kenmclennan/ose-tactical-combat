@@ -25,11 +25,17 @@ export function renderDeclarationView(
   return `
     <div class="declaration-view">
       <div class="combatant-section">
-        <div class="section-title">Players</div>
+        <div class="section-header">
+          <span class="section-title">Players</span>
+          ${isGM ? `<button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="player">+ Add</button>` : ""}
+        </div>
         ${playerChars.map((c) => renderDeclarationRow(c, state, playerId, isGM)).join("")}
       </div>
       <div class="combatant-section">
-        <div class="section-title">Monsters</div>
+        <div class="section-header">
+          <span class="section-title">Monsters</span>
+          ${isGM ? `<button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="monster">+ Add</button>` : ""}
+        </div>
         ${monsters.map((c) => renderDeclarationRow(c, state, playerId, isGM)).join("")}
       </div>
       ${isGM ? `
