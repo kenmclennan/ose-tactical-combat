@@ -15,6 +15,7 @@ export function renderDeclarationView(
   state: CombatState,
   playerId: string,
   isGM: boolean,
+  partyPlayers: { id: string; name: string }[] = [],
 ): string {
   const active = getActiveCombatants(state);
   const allLocked = allDeclarationsLocked(state);
@@ -29,14 +30,14 @@ export function renderDeclarationView(
           <span class="section-title">Players</span>
           ${isGM ? `<button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="player">+ Add</button>` : ""}
         </div>
-        ${playerChars.map((c) => renderDeclarationRow(c, state, playerId, isGM)).join("")}
+        ${playerChars.map((c) => renderDeclarationRow(c, state, playerId, isGM, partyPlayers)).join("")}
       </div>
       <div class="combatant-section">
         <div class="section-header">
           <span class="section-title">Monsters</span>
           ${isGM ? `<button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="monster">+ Add</button>` : ""}
         </div>
-        ${monsters.map((c) => renderDeclarationRow(c, state, playerId, isGM)).join("")}
+        ${monsters.map((c) => renderDeclarationRow(c, state, playerId, isGM, partyPlayers)).join("")}
       </div>
       ${isGM ? `
         <div class="declaration-actions">
@@ -44,7 +45,6 @@ export function renderDeclarationView(
             Resolve Actions
           </button>
           ${!allLocked ? `<div class="hint">Waiting for all declarations to lock in</div>` : ""}
-          <button class="btn btn-sm btn-secondary btn-full" data-action="force-resolve">Force Resolve (skip unlocked)</button>
           <button class="btn btn-sm btn-secondary btn-full" data-action="force-end-round">End Round</button>
         </div>
       ` : ""}
@@ -57,11 +57,13 @@ function renderDeclarationRow(
   state: CombatState,
   playerId: string,
   isGM: boolean,
+  partyPlayers: { id: string; name: string }[] = [],
 ): string {
   const ap = getCurrentAp(state, c.id);
   const decl = getDeclaration(state, c.id);
   const isOwner = c.ownerId === playerId;
-  const canDeclare = isGM ? c.side === "monster" : isOwner;
+  const canDeclare = (isGM && c.side === "monster") || isOwner;
+  const ownerName = partyPlayers.find((p) => p.id === c.ownerId)?.name;
 
   const cardOpts: CardOptions = {
     showAp: true,
@@ -70,6 +72,7 @@ function renderDeclarationRow(
     isGM,
     isOwner,
     playerId,
+    ownerName,
   };
 
   if (c.status !== "active") {
@@ -107,7 +110,7 @@ function renderDeclarationRow(
   const doneButtonText = c.side === "monster" ? "Done - No more actions" : "Done - Bank AP as Fury";
   if (canDeclare && !decl?.locked) {
     return `
-      <div class="decl-row decl-active" data-combatant-id="${c.id}">
+      <div class="decl-row decl-active ${!decl ? "decl-undeclared" : ""}" data-combatant-id="${c.id}">
         ${renderCombatantCard(c, state, cardOpts)}
         <div class="action-picker">
           ${renderActionPicker(c.id, ap, decl)}
@@ -133,25 +136,26 @@ function renderDeclarationRow(
       : showAction
         ? ACTION_LIST.find((a) => a.id === decl.actionId)?.name ?? decl.actionId
         : null;
+    const lockedCardOpts: CardOptions = {
+      ...cardOpts,
+      extraActions: isGM ? `<button class="btn-icon" data-action="unlock-declaration" data-combatant-id="${c.id}" title="Unlock">&#x1F513;</button>` : undefined,
+    };
     return `
       <div class="decl-row decl-locked ${isDone ? "decl-done" : ""}">
-        ${renderCombatantCard(c, state, cardOpts)}
+        ${renderCombatantCard(c, state, lockedCardOpts)}
         <div class="decl-status">
           ${showAction
             ? `<span class="decl-action-label">${actionName}${isDone ? "" : ` (${decl.cost} AP)`}</span>`
             : `<span class="badge badge-info">Locked</span>`
           }
         </div>
-        ${isGM ? `
-          <button class="btn-icon" data-action="unlock-declaration" data-combatant-id="${c.id}" title="Unlock">&#x1F513;</button>
-        ` : ""}
       </div>
     `;
   }
 
   // Someone else's unlocked combatant - show "declaring..."
   return `
-    <div class="decl-row">
+    <div class="decl-row decl-undeclared">
       ${renderCombatantCard(c, state, cardOpts)}
       <div class="decl-status"><span class="stat muted">Declaring...</span></div>
     </div>
@@ -241,9 +245,6 @@ export function bindDeclarationEvents(
       case "advance-resolution":
         if (isGM) advanceToResolution(state);
         break;
-      case "force-resolve":
-        if (isGM) forceResolve(state);
-        break;
       case "force-end-round":
         if (isGM) forceEndRound(state);
         break;
@@ -262,7 +263,7 @@ function selectAction(
   const c = state.combatants.find((c) => c.id === combatantId);
   if (!c) return;
 
-  const canDeclare = isGM ? c.side === "monster" : c.ownerId === playerId;
+  const canDeclare = (isGM && c.side === "monster") || c.ownerId === playerId;
   if (!canDeclare) return;
 
   const cycle = state.round!.currentCycle;
@@ -295,7 +296,7 @@ function declareDone(
   const c = state.combatants.find((c) => c.id === combatantId);
   if (!c) return;
 
-  const canDeclare = isGM ? c.side === "monster" : c.ownerId === playerId;
+  const canDeclare = (isGM && c.side === "monster") || c.ownerId === playerId;
   if (!canDeclare) return;
 
   const round = state.round!;
@@ -377,33 +378,6 @@ function advanceToResolution(state: CombatState): void {
       ...state.round!,
       currentCycle: {
         ...state.round!.currentCycle,
-        resolutionOrder: order,
-        currentResolutionIndex: 0,
-      },
-    },
-  });
-}
-
-function forceResolve(state: CombatState): void {
-  const cycle = state.round!.currentCycle;
-  const declarations = [...cycle.declarations];
-
-  const order = buildResolutionOrder({
-    ...state,
-    round: {
-      ...state.round!,
-      currentCycle: { ...cycle, declarations },
-    },
-  });
-
-  saveState({
-    ...state,
-    phase: "resolution",
-    round: {
-      ...state.round!,
-      currentCycle: {
-        ...cycle,
-        declarations,
         resolutionOrder: order,
         currentResolutionIndex: 0,
       },

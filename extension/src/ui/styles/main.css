@@ -489,12 +489,14 @@ input[type="checkbox"] {
 }
 
 .ap-roll-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: 6px 8px;
   background: var(--bg-surface);
   border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.ap-roll-row .ap-roll-controls {
+  margin-top: 4px;
 }
 
 .ap-roll-result {
@@ -562,6 +564,16 @@ input[type="checkbox"] {
 .decl-row.decl-locked {
   border-color: var(--success);
   background: rgba(64, 176, 64, 0.05);
+}
+
+.decl-undeclared {
+  border-color: var(--danger);
+}
+
+.owner-name {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .decl-info {
@@ -836,6 +848,7 @@ input[type="checkbox"] {
 .stat-ap {
   color: var(--accent);
   font-weight: 600;
+  margin-left: auto;
 }
 
 .hp-value.editable,
@@ -872,6 +885,10 @@ input[type="checkbox"] {
   font-size: 11px;
   font-family: inherit;
   text-align: center;
+}
+
+.stat-ap .inline-edit-input {
+  width: 36px;
 }
 
 .inline-edit-input:focus {

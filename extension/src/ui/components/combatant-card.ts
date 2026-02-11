@@ -9,6 +9,8 @@ export interface CardOptions {
   isGM: boolean;
   isOwner: boolean;
   playerId: string;
+  extraActions?: string;
+  ownerName?: string;
 }
 
 export function renderCombatantCard(
@@ -24,7 +26,7 @@ export function renderCombatantCard(
   return `
     <div class="combatant-card ${isOut ? "combatant-out" : ""}" data-combatant-id="${c.id}">
       <div class="card-header">
-        <span class="combatant-name">${escapeHtml(c.name)}</span>
+        <span class="combatant-name">${escapeHtml(c.name)}${opts.ownerName ? ` <span class="owner-name">(${escapeHtml(opts.ownerName)})</span>` : ""}</span>
         <div class="card-actions">
           ${isOut ? `<span class="badge badge-danger">Out</span>` : ""}
           ${canEdit && opts.showEdit ? `<button class="btn-icon" data-action="edit-combatant" data-id="${c.id}" title="Edit">&#x270E;</button>` : ""}
@@ -33,6 +35,7 @@ export function renderCombatantCard(
               ${isOut ? "&#x2764;" : "&#x2620;"}
             </button>
           ` : ""}
+          ${opts.extraActions ?? ""}
         </div>
       </div>
       ${showStats ? `

@@ -112,7 +112,7 @@ function renderPhaseContent(ctx: RenderContext): string {
       phaseHtml = renderRoundStartView(state, playerId, isGM);
       break;
     case "declaration":
-      phaseHtml = renderDeclarationView(state, playerId, isGM);
+      phaseHtml = renderDeclarationView(state, playerId, isGM, ctx.partyPlayers);
       break;
     case "resolution":
       phaseHtml = renderResolutionView(state, playerId, isGM);
