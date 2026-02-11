@@ -8,6 +8,7 @@ import {
 } from "../../state/selectors";
 import { ACTION_LIST } from "../../rules/actions";
 import { deductCycleCosts } from "../../rules/resolution";
+import { calculateFuryBanked } from "../../rules/fury";
 import { renderCombatantCard, type CardOptions } from "../components/combatant-card";
 
 export function renderResolutionView(
@@ -40,6 +41,9 @@ export function renderResolutionView(
           ` : `
             <button class="btn btn-primary btn-full" data-action="end-cycle">
               End Cycle
+            </button>
+            <button class="btn btn-secondary btn-full" data-action="force-end-round">
+              End Round
             </button>
           `}
         </div>
@@ -130,6 +134,9 @@ export function bindResolutionEvents(
     if (action === "end-cycle" && isGM) {
       endCycle(state);
     }
+    if (action === "force-end-round" && isGM) {
+      forceEndRound(state);
+    }
   });
 }
 
@@ -213,4 +220,20 @@ function endCycle(state: CombatState): void {
       },
     });
   }
+}
+
+function forceEndRound(state: CombatState): void {
+  const round = state.round!;
+  const cycle = round.currentCycle;
+  const apCurrent = deductCycleCosts(round.apCurrent, cycle.declarations);
+
+  saveState({
+    ...state,
+    phase: "round-end",
+    round: {
+      ...round,
+      apCurrent,
+      completedCycles: round.completedCycles + 1,
+    },
+  });
 }

@@ -5,9 +5,10 @@ import {
   getCurrentAp,
   getDeclaration,
   allDeclarationsLocked,
+  isDoneForRound,
 } from "../../state/selectors";
 import { ACTION_LIST, ACTIONS } from "../../rules/actions";
-import { buildResolutionOrder } from "../../rules/resolution";
+import { buildResolutionOrder, deductCycleCosts } from "../../rules/resolution";
 import { renderCombatantCard, type CardOptions } from "../components/combatant-card";
 
 export function renderDeclarationView(
@@ -38,6 +39,7 @@ export function renderDeclarationView(
           </button>
           ${!allLocked ? `<div class="hint">Waiting for all declarations to lock in</div>` : ""}
           <button class="btn btn-sm btn-secondary btn-full" data-action="force-resolve">Force Resolve (skip unlocked)</button>
+          <button class="btn btn-sm btn-secondary btn-full" data-action="force-end-round">End Round</button>
         </div>
       ` : ""}
     </div>
@@ -72,6 +74,20 @@ function renderDeclarationRow(
     `;
   }
 
+  // Done for the round - show with no action picker, GM can undo
+  const doneForRound = isDoneForRound(state, c.id);
+  if (doneForRound) {
+    return `
+      <div class="decl-row decl-done">
+        ${renderCombatantCard(c, state, cardOpts)}
+        <div class="decl-status">
+          <span class="stat muted">Done for round</span>
+          ${isGM ? `<button class="btn-icon" data-action="undo-done-for-round" data-combatant-id="${c.id}" title="Undo done">&#x21A9;</button>` : ""}
+        </div>
+      </div>
+    `;
+  }
+
   if (ap < 1) {
     return `
       <div class="decl-row">
@@ -82,6 +98,7 @@ function renderDeclarationRow(
   }
 
   // If this user can declare for this combatant, show the action picker
+  const doneButtonText = c.side === "monster" ? "Done - No more actions" : "Done - Bank AP as Fury";
   if (canDeclare && !decl?.locked) {
     return `
       <div class="decl-row decl-active" data-combatant-id="${c.id}">
@@ -91,7 +108,7 @@ function renderDeclarationRow(
         </div>
         <div class="decl-controls">
           <button class="btn btn-sm btn-done" data-action="declare-done" data-combatant-id="${c.id}">
-            Done - Bank AP as Fury
+            ${doneButtonText}
           </button>
           <button class="btn btn-primary btn-sm" data-action="lock-declaration" data-combatant-id="${c.id}" ${decl ? "" : "disabled"}>
             Lock In
@@ -208,11 +225,21 @@ export function bindDeclarationEvents(
         }
         break;
       }
+      case "undo-done-for-round": {
+        const combatantId = target.dataset.combatantId;
+        if (combatantId && isGM) {
+          undoDoneForRound(state, combatantId);
+        }
+        break;
+      }
       case "advance-resolution":
         if (isGM) advanceToResolution(state);
         break;
       case "force-resolve":
         if (isGM) forceResolve(state);
+        break;
+      case "force-end-round":
+        if (isGM) forceEndRound(state);
         break;
     }
   });
@@ -265,23 +292,42 @@ function declareDone(
   const canDeclare = isGM ? c.side === "monster" : c.ownerId === playerId;
   if (!canDeclare) return;
 
-  const cycle = state.round!.currentCycle;
+  const round = state.round!;
+  const cycle = round.currentCycle;
+  // Remove any existing declaration for this combatant
   const existing = cycle.declarations.filter((d) => d.combatantId !== combatantId);
+  // Add a locked "done" declaration for the current cycle
   const doneDecl: Declaration = {
     combatantId,
     actionId: "done",
     cost: 0,
     locked: true,
   };
+  // Add to doneForRound so they stay done in future cycles
+  const doneForRound = round.doneForRound.includes(combatantId)
+    ? round.doneForRound
+    : [...round.doneForRound, combatantId];
 
   saveState({
     ...state,
     round: {
-      ...state.round!,
+      ...round,
+      doneForRound,
       currentCycle: {
         ...cycle,
         declarations: [...existing, doneDecl],
       },
+    },
+  });
+}
+
+function undoDoneForRound(state: CombatState, combatantId: string): void {
+  const round = state.round!;
+  saveState({
+    ...state,
+    round: {
+      ...round,
+      doneForRound: round.doneForRound.filter((id) => id !== combatantId),
     },
   });
 }
@@ -355,6 +401,22 @@ function forceResolve(state: CombatState): void {
         resolutionOrder: order,
         currentResolutionIndex: 0,
       },
+    },
+  });
+}
+
+function forceEndRound(state: CombatState): void {
+  const round = state.round!;
+  const cycle = round.currentCycle;
+  const apCurrent = deductCycleCosts(round.apCurrent, cycle.declarations);
+
+  saveState({
+    ...state,
+    phase: "round-end",
+    round: {
+      ...round,
+      apCurrent,
+      completedCycles: round.completedCycles + 1,
     },
   });
 }

@@ -20,4 +20,4 @@ export type {
 } from "./combat";
 
 export type { RoomMetadata, MetadataWithCombat } from "./metadata";
-export { METADATA_KEY } from "./metadata";
+export { METADATA_KEY, ROSTER_KEY } from "./metadata";

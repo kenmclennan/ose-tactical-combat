@@ -4,7 +4,6 @@ import { FURY_SPEND_OPTIONS, canSpendFury, appendFuryLog } from "../../rules/fur
 
 export function renderFuryPanel(state: CombatState, isGM: boolean): string {
   const fury = state.fury.current;
-  if (fury <= 0) return "";
 
   return `
     <div class="fury-panel">

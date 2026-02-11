@@ -110,6 +110,7 @@ function nextRound(state: CombatState): void {
         currentResolutionIndex: 0,
       },
       completedCycles: 0,
+      doneForRound: [],
     },
   });
 }

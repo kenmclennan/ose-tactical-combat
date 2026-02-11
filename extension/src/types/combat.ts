@@ -32,6 +32,7 @@ export interface RoundState {
   apCurrent: Record<string, number>;
   currentCycle: CycleState;
   completedCycles: number;
+  doneForRound: string[];
 }
 
 export interface FuryState {

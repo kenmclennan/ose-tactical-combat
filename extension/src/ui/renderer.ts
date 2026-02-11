@@ -1,6 +1,8 @@
 import type { CombatState, CombatPhase } from "../types";
 import { saveState, clearState } from "../state/store";
-import { renderSetupView, bindSetupEvents, showEditModalHandler } from "./views/setup";
+import { renderSetupView, bindSetupEvents, showEditModalHandler, showAddModalHandler } from "./views/setup";
+import { showModal, closeModal } from "./modal";
+import { saveRoster } from "../state/roster";
 import { renderRoundStartView, bindRoundStartEvents } from "./views/round-start";
 import { renderDeclarationView, bindDeclarationEvents } from "./views/declaration";
 import { renderResolutionView, bindResolutionEvents } from "./views/resolution";
@@ -134,8 +136,19 @@ function renderPhaseContent(ctx: RenderContext): string {
       phaseHtml = `<div class="empty-state">Unknown phase</div>`;
   }
 
-  // Persistent fury panel - show during any combat phase when fury > 0
-  const showFury = state.phase !== "setup" && state.phase !== "combat-end" && state.fury.current > 0;
+  // GM add combatant buttons during active combat
+  const showAdd = isGM && state.phase !== "setup" && state.phase !== "combat-end";
+  if (showAdd) {
+    phaseHtml += `
+      <div class="add-combatant-bar">
+        <button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="player">+ Player</button>
+        <button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="monster">+ Monster</button>
+      </div>
+    `;
+  }
+
+  // Persistent fury panel - show during all combat phases
+  const showFury = state.phase !== "setup" && state.phase !== "combat-end";
   if (showFury) {
     phaseHtml += renderFuryPanel(state, isGM);
   }
@@ -174,7 +187,12 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
       });
     }
 
-    if (action === "end-combat" && isGM) {
+    if (action === "end-combat" && isGM && state) {
+      // Save player roster before clearing
+      const players = state.combatants.filter((c) => c.side === "player");
+      if (players.length > 0) {
+        saveRoster(players);
+      }
       clearState();
     }
 
@@ -188,6 +206,57 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
         if (canEdit) {
           showEditModalHandler(state, id, isGM, playerId, partyPlayers);
         }
+      }
+    }
+
+    // Global remove-combatant handler with confirmation
+    if (action === "remove-combatant" && state && isGM) {
+      const id = target.dataset.id;
+      if (id) {
+        const c = state.combatants.find((c) => c.id === id);
+        if (!c) return;
+        const name = c.name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        showModal(`
+          <div class="modal-overlay" data-modal-overlay="true">
+            <div class="modal">
+              <div class="modal-header">
+                <span class="modal-title">Remove Combatant</span>
+                <button class="btn-icon" data-action="close-modal">&#x2715;</button>
+              </div>
+              <div class="modal-body">
+                <p>Remove <strong>${name}</strong> from combat?</p>
+              </div>
+              <div class="modal-footer">
+                <button class="btn btn-secondary" data-action="close-modal">Cancel</button>
+                <button class="btn btn-primary" data-action="confirm-remove" data-id="${c.id}">Remove</button>
+              </div>
+            </div>
+          </div>
+        `, (modalAction, data) => {
+          if (modalAction === "confirm-remove" && data.id) {
+            const updated: CombatState = {
+              ...state,
+              combatants: state.combatants.filter((c) => c.id !== data.id),
+            };
+            // Also remove from doneForRound if present
+            if (updated.round?.doneForRound) {
+              updated.round = {
+                ...updated.round,
+                doneForRound: updated.round.doneForRound.filter((did) => did !== data.id),
+              };
+            }
+            saveState(updated);
+            closeModal();
+          }
+        });
+      }
+    }
+
+    // Global add-combatant handler (works from any phase for GM)
+    if (action === "add-combatant" && state && isGM) {
+      const side = target.dataset.side as "player" | "monster" | undefined;
+      if (side) {
+        showAddModalHandler(state, side, playerId, isGM, partyPlayers, state.phase !== "setup");
       }
     }
 
@@ -215,7 +284,7 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
   }
 
   // Bind fury events when fury panel is visible
-  const showFury = state.phase !== "setup" && state.phase !== "combat-end" && state.fury.current > 0;
+  const showFury = state.phase !== "setup" && state.phase !== "combat-end";
   if (showFury) {
     bindFuryEvents(content, state, playerId, isGM);
   }

@@ -2,9 +2,12 @@ import type { CombatState, Combatant, CombatantSide, DexCategory } from "../../t
 import type { PartyPlayer } from "../renderer";
 import { PLAYER_BASE_AP, MONSTER_BASE_AP } from "../../util/constants";
 import { generateId } from "../../util/ids";
-import { saveState } from "../../state/store";
+import { saveState, getState } from "../../state/store";
 import { getPlayerCombatants, getMonsterCombatants } from "../../state/selectors";
+import { computeStartingAp } from "../../rules/ap";
+import { rollD6 } from "../../dice/roller";
 import { showModal, closeModal } from "../modal";
+import { loadRoster, rosterToCombatant } from "../../state/roster";
 
 export function renderSetupView(
   state: CombatState,
@@ -25,7 +28,12 @@ export function renderSetupView(
           ${isGM ? `<button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="player">+ Add</button>` : ""}
         </div>
         <div class="combatant-list">
-          ${players.length === 0 ? `<div class="empty-list">No players added</div>` : ""}
+          ${players.length === 0 ? `
+            <div class="empty-list">No players added</div>
+            ${isGM ? `<button class="btn btn-sm btn-secondary btn-full" data-action="load-roster" style="margin-top: 4px;">Load Saved Party</button>` : ""}
+          ` : `
+            ${isGM ? `<button class="btn btn-sm btn-secondary" data-action="load-roster" style="margin-top: 4px;">Load Saved Party</button>` : ""}
+          `}
           ${players.map((c) => renderCombatantRow(c, playerId, isGM)).join("")}
         </div>
       </div>
@@ -119,8 +127,10 @@ function renderOwnerDropdown(partyPlayers: PartyPlayer[], currentOwnerId?: strin
 
 // --- Edit modal ---
 
-export function renderEditModal(c: Combatant, isGM: boolean, partyPlayers: PartyPlayer[] = []): string {
+export function renderEditModal(c: Combatant, isGM: boolean, partyPlayers: PartyPlayer[] = [], playerId?: string): string {
   const showOwnerDropdown = isGM && c.side === "player";
+  const isOwner = playerId ? c.ownerId === playerId : false;
+  const canEditName = isGM || isOwner;
 
   return `
     <div class="modal-overlay" data-modal-overlay="true">
@@ -132,7 +142,7 @@ export function renderEditModal(c: Combatant, isGM: boolean, partyPlayers: Party
         <div class="modal-body">
           <div class="form-row">
             <label>Name</label>
-            <input type="text" id="edit-name" value="${escapeHtml(c.name)}" ${isGM ? "" : "disabled"} />
+            <input type="text" id="edit-name" value="${escapeHtml(c.name)}" ${canEditName ? "" : "disabled"} />
           </div>
           ${showOwnerDropdown ? renderOwnerDropdown(partyPlayers, c.ownerId) : ""}
           <div class="form-row-group">
@@ -285,19 +295,90 @@ export function bindSetupEvents(
         if (id) showEditModalHandler(state, id, isGM, playerId, partyPlayers);
         break;
       case "remove-combatant":
-        if (id && isGM) removeCombatant(state, id);
+        // Handled by global handler in renderer.ts (with confirmation)
         break;
       case "start-combat":
         if (isGM) startCombat(state, playerId);
+        break;
+      case "load-roster":
+        if (isGM) loadRosterIntoSetup(state);
         break;
     }
   });
 }
 
-function showAddModalHandler(state: CombatState, side: CombatantSide, playerId: string, isGM: boolean, partyPlayers: PartyPlayer[]): void {
+export function showAddModalHandler(state: CombatState, side: CombatantSide, playerId: string, isGM: boolean, partyPlayers: PartyPlayer[], midCombat: boolean = false): void {
   showModal(renderAddModal(side, isGM, partyPlayers), (action, data) => {
     if (action === "create-combatant") {
-      createCombatantFromModal(state, side, playerId);
+      const combatantId = createCombatantFromModal(state, side, playerId);
+      closeModal();
+      // If mid-combat, show AP assignment modal
+      if (midCombat && combatantId) {
+        const freshState = getState();
+        if (freshState) {
+          showApAssignModal(freshState, combatantId);
+        }
+      }
+    }
+  });
+}
+
+function showApAssignModal(state: CombatState, combatantId: string): void {
+  const c = state.combatants.find((c) => c.id === combatantId);
+  if (!c) return;
+  const name = c.name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  showModal(`
+    <div class="modal-overlay" data-modal-overlay="true">
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title">Set AP for ${name}</span>
+          <button class="btn-icon" data-action="close-modal">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+          <div class="ap-roll-controls" style="justify-content: center; gap: 8px;">
+            <button class="btn btn-sm btn-primary" data-action="roll-new-ap">Roll</button>
+            <div class="manual-ap-input">
+              <input type="number" class="input-sm" id="new-combatant-ap" min="1" max="12" placeholder="AP" />
+              <button class="btn btn-sm btn-secondary" data-action="set-new-ap">Set</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `, (action) => {
+    const freshState = getState();
+    if (!freshState?.round) return;
+    const combatant = freshState.combatants.find((c) => c.id === combatantId);
+    if (!combatant) return;
+
+    if (action === "roll-new-ap") {
+      const roll = rollD6();
+      const ap = computeStartingAp(combatant.apBase, roll, combatant.dexCategory, combatant.apVariance, combatant.surprised);
+      saveState({
+        ...freshState,
+        round: {
+          ...freshState.round!,
+          apRolls: { ...freshState.round!.apRolls, [combatantId]: roll },
+          apCurrent: { ...freshState.round!.apCurrent, [combatantId]: ap },
+        },
+      });
+      closeModal();
+    }
+
+    if (action === "set-new-ap") {
+      const input = document.querySelector("#new-combatant-ap") as HTMLInputElement | null;
+      if (!input) return;
+      const val = parseInt(input.value);
+      if (isNaN(val) || val < 1) return;
+      saveState({
+        ...freshState,
+        round: {
+          ...freshState.round!,
+          apRolls: { ...freshState.round!.apRolls, [combatantId]: 0 },
+          apCurrent: { ...freshState.round!.apCurrent, [combatantId]: val },
+        },
+      });
       closeModal();
     }
   });
@@ -306,9 +387,9 @@ function showAddModalHandler(state: CombatState, side: CombatantSide, playerId: 
 export function showEditModalHandler(state: CombatState, id: string, isGM: boolean, playerId: string, partyPlayers: PartyPlayer[]): void {
   const c = state.combatants.find((c) => c.id === id);
   if (!c) return;
-  showModal(renderEditModal(c, isGM, partyPlayers), (action, data) => {
+  showModal(renderEditModal(c, isGM, partyPlayers, playerId), (action, data) => {
     if (action === "save-combatant") {
-      saveCombatantFromModal(state, id, isGM);
+      saveCombatantFromModal(state, id, isGM, playerId);
       closeModal();
     }
   });
@@ -318,7 +399,7 @@ function createCombatantFromModal(
   state: CombatState,
   side: CombatantSide,
   playerId: string,
-): void {
+): string {
   const name = (document.querySelector("#edit-name") as HTMLInputElement)?.value?.trim() || "Unknown";
   const hpMax = parseInt((document.querySelector("#edit-hp-max") as HTMLInputElement)?.value) || 8;
   const ac = parseInt((document.querySelector("#edit-ac") as HTMLInputElement)?.value) || 9;
@@ -350,12 +431,14 @@ function createCombatantFromModal(
     combatants: [...state.combatants, combatant],
   };
   saveState(updated);
+  return combatant.id;
 }
 
 export function saveCombatantFromModal(
   state: CombatState,
   id: string,
   isGM: boolean,
+  playerId?: string,
 ): void {
   const c = state.combatants.find((c) => c.id === id);
   if (!c) return;
@@ -367,9 +450,11 @@ export function saveCombatantFromModal(
   const thac0 = parseInt((document.querySelector("#edit-thac0") as HTMLInputElement)?.value) || c.stats.thac0;
   const dex = (document.querySelector("#edit-dex") as HTMLSelectElement)?.value as DexCategory || c.dexCategory;
 
+  const isOwner = playerId ? c.ownerId === playerId : false;
+  const canEditName = isGM || isOwner;
   const updated: Combatant = {
     ...c,
-    name: isGM ? name : c.name,
+    name: canEditName ? name : c.name,
     stats: { hpCurrent, hpMax, ac, thac0 },
     dexCategory: dex,
   };
@@ -405,6 +490,17 @@ function removeCombatant(state: CombatState, id: string): void {
   saveState(updated);
 }
 
+async function loadRosterIntoSetup(state: CombatState): Promise<void> {
+  const roster = await loadRoster();
+  if (roster.length === 0) return;
+
+  const newCombatants = roster.map((entry) => rosterToCombatant(entry, generateId()));
+  saveState({
+    ...state,
+    combatants: [...state.combatants, ...newCombatants],
+  });
+}
+
 function startCombat(state: CombatState, gmId: string): void {
   const updated: CombatState = {
     ...state,
@@ -421,6 +517,7 @@ function startCombat(state: CombatState, gmId: string): void {
         currentResolutionIndex: 0,
       },
       completedCycles: 0,
+      doneForRound: [],
     },
   };
   saveState(updated);

@@ -184,15 +184,15 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   border: none;
   border-radius: 3px;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .btn-icon:hover {
@@ -950,6 +950,18 @@ input[type="checkbox"] {
   display: flex;
   justify-content: space-between;
   gap: 6px;
+}
+
+/* --- Add Combatant Bar --- */
+
+.add-combatant-bar {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.add-combatant-bar .btn {
+  flex: 1;
 }
 
 /* --- Combat Footer --- */

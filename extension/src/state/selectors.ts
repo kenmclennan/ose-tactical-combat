@@ -41,11 +41,16 @@ export function getDeclaration(
   );
 }
 
+export function isDoneForRound(state: CombatState, combatantId: string): boolean {
+  return state.round?.doneForRound?.includes(combatantId) ?? false;
+}
+
 export function allDeclarationsLocked(state: CombatState): boolean {
   const active = getActiveCombatants(state);
   const cycle = state.round?.currentCycle;
   if (!cycle) return false;
   return active.every((c) => {
+    if (isDoneForRound(state, c.id)) return true;
     const ap = getCurrentAp(state, c.id);
     if (ap < 1) return true;
     const decl = cycle.declarations.find((d) => d.combatantId === c.id);
@@ -55,7 +60,10 @@ export function allDeclarationsLocked(state: CombatState): boolean {
 
 export function anyoneCanAct(state: CombatState): boolean {
   const active = getActiveCombatants(state);
-  return active.some((c) => getCurrentAp(state, c.id) >= 1);
+  return active.some((c) => {
+    if (isDoneForRound(state, c.id)) return false;
+    return getCurrentAp(state, c.id) >= 1;
+  });
 }
 
 export function getResolutionOrder(state: CombatState): string[] {
