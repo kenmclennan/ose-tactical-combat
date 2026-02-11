@@ -45,11 +45,13 @@ export function renderSetupView(
 
       ${isGM ? `
         <div class="setup-actions">
-          <button class="btn btn-primary btn-full" data-action="start-combat" ${canStart ? "" : "disabled"}>
-            Start Combat
-          </button>
+          <div class="setup-buttons">
+            <button class="btn btn-primary" data-action="start-combat" ${canStart ? "" : "disabled"}>
+              Start Combat
+            </button>
+            <button class="btn btn-secondary" data-action="cancel-setup">Cancel</button>
+          </div>
           ${!canStart ? `<div class="hint">Need at least 1 player and 1 monster</div>` : ""}
-          <button class="btn btn-sm btn-secondary btn-full" data-action="cancel-setup">Cancel</button>
         </div>
       ` : ""}
     </div>

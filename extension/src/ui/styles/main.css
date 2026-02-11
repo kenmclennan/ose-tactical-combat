@@ -315,31 +315,16 @@ body {
   margin-top: 8px;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 6px;
 }
 
-.setup-actions .btn {
-  border-radius: 0;
-  margin: 0;
+.setup-buttons {
+  display: flex;
+  gap: 6px;
 }
 
-.setup-actions .btn:first-child {
-  border-radius: var(--radius) var(--radius) 0 0;
-}
-
-.setup-actions .hint {
-  padding: 6px 12px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-top: none;
-  border-bottom: none;
-  margin: 0;
-  text-align: center;
-}
-
-.setup-actions .btn:last-child {
-  border-radius: 0 0 var(--radius) var(--radius);
-  border-top: none;
+.setup-buttons .btn {
+  flex: 1;
 }
 
 .hint {
