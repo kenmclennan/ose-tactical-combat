@@ -1,5 +1,7 @@
 import type { CombatState, CombatPhase } from "../types";
 import { saveState, clearState } from "../state/store";
+import { loadRoster, rosterToCombatant } from "../state/roster";
+import { generateId } from "../util/ids";
 import { renderSetupView, bindSetupEvents, showEditModalHandler, showAddModalHandler } from "./views/setup";
 import { showModal, closeModal } from "./modal";
 import { saveRoster } from "../state/roster";
@@ -167,14 +169,21 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
     const action = target.dataset.action;
 
     if (action === "new-combat" && isGM) {
-      saveState({
-        version: 1,
-        phase: "setup",
-        combatants: [],
-        round: null,
-        fury: { current: 0, log: [] },
-        gmId: playerId,
+      loadRoster().then((roster) => {
+        const combatants = roster.map((entry) => rosterToCombatant(entry, generateId()));
+        saveState({
+          version: 1,
+          phase: "setup",
+          combatants,
+          round: null,
+          fury: { current: 0, log: [] },
+          gmId: playerId,
+        });
       });
+    }
+
+    if (action === "cancel-setup" && isGM) {
+      clearState();
     }
 
     if (action === "end-combat" && isGM && state) {

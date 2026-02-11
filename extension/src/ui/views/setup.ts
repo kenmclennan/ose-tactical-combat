@@ -7,7 +7,6 @@ import { getPlayerCombatants, getMonsterCombatants } from "../../state/selectors
 import { computeStartingAp } from "../../rules/ap";
 import { rollD6 } from "../../dice/roller";
 import { showModal, closeModal } from "../modal";
-import { loadRoster, rosterToCombatant } from "../../state/roster";
 
 export function renderSetupView(
   state: CombatState,
@@ -28,12 +27,7 @@ export function renderSetupView(
           ${isGM ? `<button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="player">+ Add</button>` : ""}
         </div>
         <div class="combatant-list">
-          ${players.length === 0 ? `
-            <div class="empty-list">No players added</div>
-            ${isGM ? `<button class="btn btn-sm btn-secondary btn-full" data-action="load-roster" style="margin-top: 4px;">Load Saved Party</button>` : ""}
-          ` : `
-            ${isGM ? `<button class="btn btn-sm btn-secondary" data-action="load-roster" style="margin-top: 4px;">Load Saved Party</button>` : ""}
-          `}
+          ${players.length === 0 ? `<div class="empty-list">No players added</div>` : ""}
           ${players.map((c) => renderCombatantRow(c, playerId, isGM)).join("")}
         </div>
       </div>
@@ -55,6 +49,7 @@ export function renderSetupView(
             Start Combat
           </button>
           ${!canStart ? `<div class="hint">Need at least 1 player and 1 monster</div>` : ""}
+          <button class="btn btn-sm btn-secondary btn-full" data-action="cancel-setup">Cancel</button>
         </div>
       ` : ""}
     </div>
@@ -300,9 +295,6 @@ export function bindSetupEvents(
       case "start-combat":
         if (isGM) startCombat(state, playerId);
         break;
-      case "load-roster":
-        if (isGM) loadRosterIntoSetup(state);
-        break;
     }
   });
 }
@@ -488,17 +480,6 @@ function removeCombatant(state: CombatState, id: string): void {
     combatants: state.combatants.filter((c) => c.id !== id),
   };
   saveState(updated);
-}
-
-async function loadRosterIntoSetup(state: CombatState): Promise<void> {
-  const roster = await loadRoster();
-  if (roster.length === 0) return;
-
-  const newCombatants = roster.map((entry) => rosterToCombatant(entry, generateId()));
-  saveState({
-    ...state,
-    combatants: [...state.combatants, ...newCombatants],
-  });
 }
 
 function startCombat(state: CombatState, gmId: string): void {
