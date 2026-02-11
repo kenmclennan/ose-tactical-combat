@@ -46,10 +46,10 @@ export function renderSetupView(
       ${isGM ? `
         <div class="setup-actions">
           <div class="setup-buttons">
+            <button class="btn btn-secondary" data-action="cancel-setup">Cancel</button>
             <button class="btn btn-primary" data-action="start-combat" ${canStart ? "" : "disabled"}>
               Start Combat
             </button>
-            <button class="btn btn-secondary" data-action="cancel-setup">Cancel</button>
           </div>
           ${!canStart ? `<div class="hint">Need at least 1 player and 1 monster</div>` : ""}
         </div>
@@ -182,12 +182,6 @@ export function renderEditModal(c: Combatant, isGM: boolean, partyPlayers: Party
                   Roll for variance
                 </label>
               </div>
-            </div>
-            <div class="form-row">
-              <label class="checkbox-label">
-                <input type="checkbox" id="edit-surprised" ${c.surprised ? "checked" : ""} />
-                Surprised (half AP, no variance)
-              </label>
             </div>
           ` : ""}
         </div>
@@ -456,10 +450,8 @@ export function saveCombatantFromModal(
   if (isGM) {
     const apBase = parseInt((document.querySelector("#edit-ap-base") as HTMLInputElement)?.value) || c.apBase;
     const apVariance = (document.querySelector("#edit-ap-variance") as HTMLInputElement)?.checked ?? c.apVariance;
-    const surprised = (document.querySelector("#edit-surprised") as HTMLInputElement)?.checked ?? c.surprised;
     updated.apBase = apBase;
     updated.apVariance = apVariance;
-    updated.surprised = surprised;
 
     const ownerSelect = document.querySelector("#edit-owner") as HTMLSelectElement | null;
     if (ownerSelect) {

@@ -24,12 +24,7 @@ export function renderResolutionView(
   return `
     <div class="resolution-view">
       <div class="resolution-list">
-        ${order.map((id, idx) => {
-          const c = getCombatantById(state, id);
-          const decl = cycle.declarations.find((d) => d.combatantId === id);
-          if (!c || !decl) return "";
-          return renderResolutionRow(c, decl, idx, currentIdx, state, playerId, isGM);
-        }).join("")}
+        ${renderGroupedRows(order, cycle, currentIdx, state, playerId, isGM)}
         ${order.length === 0 ? `<div class="empty-list">No declarations to resolve</div>` : ""}
       </div>
       ${isGM ? `
@@ -52,6 +47,33 @@ export function renderResolutionView(
       `}
     </div>
   `;
+}
+
+function renderGroupedRows(
+  order: string[],
+  cycle: CombatState["round"] extends infer R ? R extends { currentCycle: infer C } ? C : never : never,
+  currentIdx: number,
+  state: CombatState,
+  playerId: string,
+  isGM: boolean,
+): string {
+  let html = "";
+  let lastAp: number | null = null;
+
+  for (let idx = 0; idx < order.length; idx++) {
+    const id = order[idx];
+    const c = getCombatantById(state, id);
+    const decl = cycle.declarations.find((d: Declaration) => d.combatantId === id);
+    if (!c || !decl) continue;
+
+    const ap = getCurrentAp(state, c.id);
+    if (ap !== lastAp) {
+      html += `<div class="ap-group-header">${ap} AP</div>`;
+      lastAp = ap;
+    }
+    html += renderResolutionRow(c, decl, idx, currentIdx, state, playerId, isGM);
+  }
+  return html;
 }
 
 function renderResolutionRow(

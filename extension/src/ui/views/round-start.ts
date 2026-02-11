@@ -1,4 +1,4 @@
-import type { CombatState, Combatant } from "../../types";
+import type { CombatState, Combatant, CombatantSide } from "../../types";
 import { saveState } from "../../state/store";
 import { getActiveCombatants } from "../../state/selectors";
 import { computeStartingAp } from "../../rules/ap";
@@ -18,13 +18,16 @@ export function renderRoundStartView(
   const monsters = active.filter((c) => c.side === "monster");
   const unrolledMonsters = monsters.filter((c) => round.apRolls[c.id] === undefined && c.status === "active");
 
+  const isRound1 = round.roundNumber === 1;
+  const playersSurprised = players.length > 0 && players.every((c) => c.surprised);
+  const monstersSurprised = monsters.length > 0 && monsters.every((c) => c.surprised);
+
   return `
     <div class="round-start-view">
-      <div class="round-header">Round ${round.roundNumber}</div>
-
       <div class="combatant-section">
         <div class="section-header">
           <span class="section-title">Players</span>
+          ${isGM && isRound1 ? `<button class="btn btn-sm ${playersSurprised ? "btn-warning" : "btn-secondary"}" data-action="toggle-side-surprise" data-side="player">${playersSurprised ? "Surprised" : "Surprise"}</button>` : ""}
           ${isGM ? `<button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="player">+ Add</button>` : ""}
         </div>
         ${players.map((c) => renderApRow(c, state, playerId, isGM)).join("")}
@@ -33,6 +36,7 @@ export function renderRoundStartView(
       <div class="combatant-section">
         <div class="section-header">
           <span class="section-title">Monsters</span>
+          ${isGM && isRound1 ? `<button class="btn btn-sm ${monstersSurprised ? "btn-warning" : "btn-secondary"}" data-action="toggle-side-surprise" data-side="monster">${monstersSurprised ? "Surprised" : "Surprise"}</button>` : ""}
           ${isGM ? `<button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="monster">+ Add</button>` : ""}
         </div>
         ${monsters.map((c) => renderApRow(c, state, playerId, isGM)).join("")}
@@ -154,6 +158,9 @@ export function bindRoundStartEvents(
       case "edit-rolled-ap":
         if (id && isGM) showApEditInline(target, state, id);
         break;
+      case "toggle-side-surprise":
+        if (isGM) toggleSideSurprise(state, target.dataset.side as CombatantSide);
+        break;
       case "begin-declaration":
         if (isGM) beginDeclaration(state);
         break;
@@ -268,6 +275,35 @@ function showApEditInline(el: HTMLElement, state: CombatState, id: string): void
       input.remove();
       el.style.display = "";
     }
+  });
+}
+
+function toggleSideSurprise(state: CombatState, side: CombatantSide): void {
+  const active = getActiveCombatants(state);
+  const sideCombatants = active.filter((c) => c.side === side && c.status === "active");
+  const allSurprised = sideCombatants.every((c) => c.surprised);
+  const newSurprised = !allSurprised;
+
+  const combatants = state.combatants.map((c) => {
+    if (c.side !== side || c.status !== "active") return c;
+    return { ...c, surprised: newSurprised };
+  });
+
+  // Recalculate AP for any combatants that already have rolls
+  const round = state.round!;
+  const apCurrent = { ...round.apCurrent };
+  for (const c of combatants) {
+    if (c.side !== side || c.status !== "active") continue;
+    const roll = round.apRolls[c.id];
+    if (roll !== undefined) {
+      apCurrent[c.id] = computeStartingAp(c.apBase, roll, c.dexCategory, c.apVariance, c.surprised);
+    }
+  }
+
+  saveState({
+    ...state,
+    combatants,
+    round: { ...round, apCurrent },
   });
 }
 

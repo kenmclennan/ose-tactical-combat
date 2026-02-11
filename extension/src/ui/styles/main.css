@@ -176,6 +176,12 @@ body {
   border-color: var(--accent-dim);
 }
 
+.btn-warning {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(228, 168, 50, 0.2);
+}
+
 .btn-full {
   width: 100%;
 }
@@ -670,6 +676,15 @@ input[type="checkbox"] {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.ap-group-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 6px 4px 2px;
+  letter-spacing: 0.05em;
 }
 
 .resolution-row {
