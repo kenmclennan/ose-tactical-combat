@@ -230,7 +230,7 @@ body {
 .section-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
   padding: 0 2px;
 }
 
@@ -240,6 +240,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-secondary);
+  margin-right: auto;
 }
 
 .combatant-list {
@@ -596,7 +597,6 @@ input[type="checkbox"] {
   white-space: nowrap;
 }
 
-.round-actions,
 .declaration-actions,
 .resolution-actions,
 .round-end-actions {
@@ -604,6 +604,16 @@ input[type="checkbox"] {
   flex-direction: column;
   gap: 6px;
   margin-top: 4px;
+}
+
+.round-actions-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.round-actions-row > button {
+  flex: 1;
 }
 
 /* --- Combatant Dead/KO --- */

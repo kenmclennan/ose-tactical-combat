@@ -44,12 +44,11 @@ export function renderRoundStartView(
       </div>
 
       ${isGM ? `
-        <div class="round-actions">
-          <button class="btn btn-primary btn-full" data-action="begin-declaration" ${allRolled ? "" : "disabled"}>
-            Begin Declaration
-          </button>
-          ${!allRolled ? `<div class="hint">All combatants need AP assigned</div>` : ""}
+        <div class="round-actions-row">
+          <button class="btn btn-secondary" data-action="end-combat">End Combat</button>
+          <button class="btn btn-primary" data-action="begin-declaration" ${allRolled ? "" : "disabled"}>Begin Declaration</button>
         </div>
+        ${!allRolled ? `<div class="hint">All combatants need AP assigned</div>` : ""}
       ` : `
         <div class="hint">${allRolled ? "Waiting for GM to begin declaration..." : "Waiting for AP rolls..."}</div>
       `}

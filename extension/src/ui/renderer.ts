@@ -148,7 +148,7 @@ function renderPhaseContent(ctx: RenderContext): string {
 
 
   // Append persistent "End Combat" footer for GM during active combat phases
-  const showEndCombat = isGM && state.phase !== "setup" && state.phase !== "combat-end";
+  const showEndCombat = isGM && state.phase !== "setup" && state.phase !== "combat-end" && state.phase !== "round-start";
   if (showEndCombat) {
     phaseHtml += `
       <div class="combat-footer">
