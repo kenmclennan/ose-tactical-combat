@@ -22,6 +22,7 @@ export const ACTIONS: Record<ActionId, ActionDefinition> = {
   "aimed-shot": { id: "aimed-shot", name: "Aimed Shot", cost: 5, description: "Ranged attack with +2 to hit" },
   charge: { id: "charge", name: "Charge", cost: 5, description: "Full move + attack, +2 to hit, -2 AC until next turn" },
   "slow-action": { id: "slow-action", name: "Slow Action", cost: 6, description: "Complex non-combat activity (barricade door, bind wounds)" },
+  done: { id: "done", name: "Done", cost: 0, description: "Take no further actions this cycle. Remaining AP banks as Fury." },
 };
 
 export const ACTION_LIST: ActionDefinition[] = Object.values(ACTIONS).sort(

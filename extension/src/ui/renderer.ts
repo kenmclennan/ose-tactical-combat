@@ -1,11 +1,12 @@
 import type { CombatState, CombatPhase } from "../types";
 import { saveState, clearState } from "../state/store";
-import { renderSetupView, bindSetupEvents } from "./views/setup";
+import { renderSetupView, bindSetupEvents, showEditModalHandler } from "./views/setup";
 import { renderRoundStartView, bindRoundStartEvents } from "./views/round-start";
 import { renderDeclarationView, bindDeclarationEvents } from "./views/declaration";
 import { renderResolutionView, bindResolutionEvents } from "./views/resolution";
 import { renderRoundEndView, bindRoundEndEvents } from "./views/round-end";
-import { bindFuryEvents } from "./components/fury-panel";
+import { renderFuryPanel, bindFuryEvents } from "./components/fury-panel";
+import { bindCardEvents } from "./components/combatant-card";
 
 const PHASE_LABELS: Record<CombatPhase, string> = {
   setup: "Setup",
@@ -133,6 +134,12 @@ function renderPhaseContent(ctx: RenderContext): string {
       phaseHtml = `<div class="empty-state">Unknown phase</div>`;
   }
 
+  // Persistent fury panel - show during any combat phase when fury > 0
+  const showFury = state.phase !== "setup" && state.phase !== "combat-end" && state.fury.current > 0;
+  if (showFury) {
+    phaseHtml += renderFuryPanel(state, isGM);
+  }
+
   // Append persistent "End Combat" footer for GM during active combat phases
   const showEndCombat = isGM && state.phase !== "setup" && state.phase !== "combat-end";
   if (showEndCombat) {
@@ -147,7 +154,7 @@ function renderPhaseContent(ctx: RenderContext): string {
 }
 
 function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
-  const { state, playerId, playerRole } = ctx;
+  const { state, playerId, playerRole, partyPlayers } = ctx;
   const isGM = playerRole === "GM";
 
   // Global actions
@@ -170,9 +177,48 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
     if (action === "end-combat" && isGM) {
       clearState();
     }
+
+    // Global edit-combatant handler - works from any phase
+    if (action === "edit-combatant" && state) {
+      const id = target.dataset.id;
+      if (id) {
+        const c = state.combatants.find((c) => c.id === id);
+        if (!c) return;
+        const canEdit = isGM || c.ownerId === playerId;
+        if (canEdit) {
+          showEditModalHandler(state, id, isGM, playerId, partyPlayers);
+        }
+      }
+    }
+
+    // Global toggle-status handler
+    if (action === "toggle-status" && state && isGM) {
+      const id = target.dataset.id;
+      if (id) {
+        const combatants = state.combatants.map((c) => {
+          if (c.id !== id) return c;
+          return {
+            ...c,
+            status: c.status === "active" ? ("incapacitated" as const) : ("active" as const),
+          };
+        });
+        saveState({ ...state, combatants });
+      }
+    }
   });
 
   if (!state) return;
+
+  // Bind card events (inline HP/AP editing) for phases that use combatant cards
+  if (state.phase !== "setup") {
+    bindCardEvents(content, state, playerId, isGM, partyPlayers);
+  }
+
+  // Bind fury events when fury panel is visible
+  const showFury = state.phase !== "setup" && state.phase !== "combat-end" && state.fury.current > 0;
+  if (showFury) {
+    bindFuryEvents(content, state, playerId, isGM);
+  }
 
   // Phase-specific events
   switch (state.phase) {
@@ -188,7 +234,6 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
     case "resolution":
     case "cycle-end":
       bindResolutionEvents(content, state, playerId, isGM);
-      if (state.fury.current > 0) bindFuryEvents(content, state, playerId);
       break;
     case "round-end":
       bindRoundEndEvents(content, state, playerId, isGM);

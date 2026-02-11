@@ -1,4 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
-  <circle cx="32" cy="32" r="28" stroke="#e4a832" stroke-width="4" fill="#1a1a2e"/>
-  <text x="32" y="40" text-anchor="middle" font-family="serif" font-size="28" font-weight="bold" fill="#e4a832">AP</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="8" fill="#1a1a2e"/>
+  <!-- Left sword blade -->
+  <line x1="14" y1="50" x2="46" y2="14" stroke="#e4a832" stroke-width="3" stroke-linecap="round"/>
+  <!-- Left sword guard -->
+  <line x1="30" y1="38" x2="22" y2="32" stroke="#e4a832" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Left sword pommel -->
+  <circle cx="12" cy="52" r="2.5" fill="#e4a832"/>
+  <!-- Right sword blade -->
+  <line x1="50" y1="50" x2="18" y2="14" stroke="#e4a832" stroke-width="3" stroke-linecap="round"/>
+  <!-- Right sword guard -->
+  <line x1="34" y1="38" x2="42" y2="32" stroke="#e4a832" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Right sword pommel -->
+  <circle cx="52" cy="52" r="2.5" fill="#e4a832"/>
 </svg>

@@ -303,7 +303,7 @@ function showAddModalHandler(state: CombatState, side: CombatantSide, playerId: 
   });
 }
 
-function showEditModalHandler(state: CombatState, id: string, isGM: boolean, playerId: string, partyPlayers: PartyPlayer[]): void {
+export function showEditModalHandler(state: CombatState, id: string, isGM: boolean, playerId: string, partyPlayers: PartyPlayer[]): void {
   const c = state.combatants.find((c) => c.id === id);
   if (!c) return;
   showModal(renderEditModal(c, isGM, partyPlayers), (action, data) => {
@@ -352,7 +352,7 @@ function createCombatantFromModal(
   saveState(updated);
 }
 
-function saveCombatantFromModal(
+export function saveCombatantFromModal(
   state: CombatState,
   id: string,
   isGM: boolean,

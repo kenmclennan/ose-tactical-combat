@@ -6,8 +6,9 @@ import {
   getDeclaration,
   allDeclarationsLocked,
 } from "../../state/selectors";
-import { ACTION_LIST } from "../../rules/actions";
+import { ACTION_LIST, ACTIONS } from "../../rules/actions";
 import { buildResolutionOrder } from "../../rules/resolution";
+import { renderCombatantCard, type CardOptions } from "../components/combatant-card";
 
 export function renderDeclarationView(
   state: CombatState,
@@ -53,15 +54,20 @@ function renderDeclarationRow(
   const decl = getDeclaration(state, c.id);
   const isOwner = c.ownerId === playerId;
   const canDeclare = isGM ? c.side === "monster" : isOwner;
-  const statusClass = c.status !== "active" ? "combatant-dead" : "";
+
+  const cardOpts: CardOptions = {
+    showAp: true,
+    showEdit: true,
+    showStatusToggle: true,
+    isGM,
+    isOwner,
+    playerId,
+  };
 
   if (c.status !== "active") {
     return `
-      <div class="decl-row ${statusClass}">
-        <div class="decl-info">
-          <span class="combatant-name">${escapeHtml(c.name)}</span>
-          <span class="stat muted">Out</span>
-        </div>
+      <div class="decl-row combatant-out">
+        ${renderCombatantCard(c, state, cardOpts)}
       </div>
     `;
   }
@@ -69,11 +75,8 @@ function renderDeclarationRow(
   if (ap < 1) {
     return `
       <div class="decl-row">
-        <div class="decl-info">
-          <span class="combatant-name">${escapeHtml(c.name)}</span>
-          <span class="ap-display">0 AP</span>
-          <span class="stat muted">No AP remaining</span>
-        </div>
+        ${renderCombatantCard(c, state, cardOpts)}
+        <div class="decl-status"><span class="stat muted">No AP remaining</span></div>
       </div>
     `;
   }
@@ -82,14 +85,14 @@ function renderDeclarationRow(
   if (canDeclare && !decl?.locked) {
     return `
       <div class="decl-row decl-active" data-combatant-id="${c.id}">
-        <div class="decl-info">
-          <span class="combatant-name">${escapeHtml(c.name)}</span>
-          <span class="ap-display">${ap} AP</span>
-        </div>
+        ${renderCombatantCard(c, state, cardOpts)}
         <div class="action-picker">
           ${renderActionPicker(c.id, ap, decl)}
         </div>
         <div class="decl-controls">
+          <button class="btn btn-sm btn-done" data-action="declare-done" data-combatant-id="${c.id}">
+            Done - Bank AP as Fury
+          </button>
           <button class="btn btn-primary btn-sm" data-action="lock-declaration" data-combatant-id="${c.id}" ${decl ? "" : "disabled"}>
             Lock In
           </button>
@@ -101,16 +104,18 @@ function renderDeclarationRow(
   // Locked declaration - show differently based on role and secrecy
   if (decl?.locked) {
     const showAction = isGM || isOwner;
-    const actionName = showAction
-      ? ACTION_LIST.find((a) => a.id === decl.actionId)?.name ?? decl.actionId
-      : null;
+    const isDone = decl.actionId === "done";
+    const actionName = isDone
+      ? "Done"
+      : showAction
+        ? ACTION_LIST.find((a) => a.id === decl.actionId)?.name ?? decl.actionId
+        : null;
     return `
-      <div class="decl-row decl-locked">
-        <div class="decl-info">
-          <span class="combatant-name">${escapeHtml(c.name)}</span>
-          <span class="ap-display">${ap} AP</span>
+      <div class="decl-row decl-locked ${isDone ? "decl-done" : ""}">
+        ${renderCombatantCard(c, state, cardOpts)}
+        <div class="decl-status">
           ${showAction
-            ? `<span class="decl-action-label">${actionName} (${decl.cost} AP)</span>`
+            ? `<span class="decl-action-label">${actionName}${isDone ? "" : ` (${decl.cost} AP)`}</span>`
             : `<span class="badge badge-info">Locked</span>`
           }
         </div>
@@ -124,11 +129,8 @@ function renderDeclarationRow(
   // Someone else's unlocked combatant - show "declaring..."
   return `
     <div class="decl-row">
-      <div class="decl-info">
-        <span class="combatant-name">${escapeHtml(c.name)}</span>
-        <span class="ap-display">${ap} AP</span>
-        <span class="stat muted">Declaring...</span>
-      </div>
+      ${renderCombatantCard(c, state, cardOpts)}
+      <div class="decl-status"><span class="stat muted">Declaring...</span></div>
     </div>
   `;
 }
@@ -138,9 +140,11 @@ function renderActionPicker(
   ap: number,
   currentDecl: Declaration | undefined,
 ): string {
+  // Filter out "done" from the action list - it has its own button
+  const actions = ACTION_LIST.filter((a) => a.id !== "done");
   return `
     <div class="action-list">
-      ${ACTION_LIST.map((a) => {
+      ${actions.map((a) => {
         const affordable = a.cost <= ap;
         const selected = currentDecl?.actionId === a.id;
         return `
@@ -162,10 +166,6 @@ function renderActionPicker(
   `;
 }
 
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-
 export function bindDeclarationEvents(
   container: HTMLElement,
   state: CombatState,
@@ -184,6 +184,13 @@ export function bindDeclarationEvents(
         const cost = parseInt(target.dataset.cost || "0");
         if (combatantId && actionId) {
           selectAction(state, combatantId, actionId, cost, playerId, isGM);
+        }
+        break;
+      }
+      case "declare-done": {
+        const combatantId = target.dataset.combatantId;
+        if (combatantId) {
+          declareDone(state, combatantId, playerId, isGM);
         }
         break;
       }
@@ -222,7 +229,6 @@ function selectAction(
   const c = state.combatants.find((c) => c.id === combatantId);
   if (!c) return;
 
-  // Permission check
   const canDeclare = isGM ? c.side === "monster" : c.ownerId === playerId;
   if (!canDeclare) return;
 
@@ -242,6 +248,39 @@ function selectAction(
       currentCycle: {
         ...cycle,
         declarations: [...existing, newDecl],
+      },
+    },
+  });
+}
+
+function declareDone(
+  state: CombatState,
+  combatantId: string,
+  playerId: string,
+  isGM: boolean,
+): void {
+  const c = state.combatants.find((c) => c.id === combatantId);
+  if (!c) return;
+
+  const canDeclare = isGM ? c.side === "monster" : c.ownerId === playerId;
+  if (!canDeclare) return;
+
+  const cycle = state.round!.currentCycle;
+  const existing = cycle.declarations.filter((d) => d.combatantId !== combatantId);
+  const doneDecl: Declaration = {
+    combatantId,
+    actionId: "done",
+    cost: 0,
+    locked: true,
+  };
+
+  saveState({
+    ...state,
+    round: {
+      ...state.round!,
+      currentCycle: {
+        ...cycle,
+        declarations: [...existing, doneDecl],
       },
     },
   });
@@ -294,12 +333,9 @@ function advanceToResolution(state: CombatState): void {
 }
 
 function forceResolve(state: CombatState): void {
-  // Lock all unlocked declarations for combatants that have AP but haven't declared
   const cycle = state.round!.currentCycle;
-  const active = getActiveCombatants(state);
   const declarations = [...cycle.declarations];
 
-  // Only include locked declarations in resolution
   const order = buildResolutionOrder({
     ...state,
     round: {

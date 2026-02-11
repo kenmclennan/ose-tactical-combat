@@ -1,4 +1,4 @@
-export type FurySpendType = "damage-boost" | "damage-reduce" | "ap-boost";
+export type FurySpendType = "damage-boost" | "damage-reduce" | "ap-boost" | "custom";
 
 export interface FuryLogEntry {
   type: "bank" | "spend";

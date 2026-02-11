@@ -30,7 +30,11 @@ export function calculateFuryBanked(state: CombatState): number {
 export function canSpendFury(
   currentFury: number,
   spendType: FurySpendType,
+  customAmount?: number,
 ): boolean {
+  if (spendType === "custom") {
+    return customAmount !== undefined && customAmount > 0 && currentFury >= customAmount;
+  }
   const option = FURY_SPEND_OPTIONS.find((o) => o.type === spendType);
   if (!option) return false;
   return currentFury >= option.cost;

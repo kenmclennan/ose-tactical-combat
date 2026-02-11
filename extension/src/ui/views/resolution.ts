@@ -8,11 +8,11 @@ import {
 } from "../../state/selectors";
 import { ACTION_LIST } from "../../rules/actions";
 import { deductCycleCosts } from "../../rules/resolution";
-import { renderFuryPanel } from "../components/fury-panel";
+import { renderCombatantCard, type CardOptions } from "../components/combatant-card";
 
 export function renderResolutionView(
   state: CombatState,
-  _playerId: string,
+  playerId: string,
   isGM: boolean,
 ): string {
   const cycle = state.round!.currentCycle;
@@ -27,11 +27,10 @@ export function renderResolutionView(
           const c = getCombatantById(state, id);
           const decl = cycle.declarations.find((d) => d.combatantId === id);
           if (!c || !decl) return "";
-          return renderResolutionRow(c, decl, idx, currentIdx, state);
+          return renderResolutionRow(c, decl, idx, currentIdx, state, playerId, isGM);
         }).join("")}
         ${order.length === 0 ? `<div class="empty-list">No declarations to resolve</div>` : ""}
       </div>
-      ${state.fury.current > 0 ? renderFuryPanel(state, !isGM) : ""}
       ${isGM ? `
         <div class="resolution-actions">
           ${!allResolved ? `
@@ -57,9 +56,12 @@ function renderResolutionRow(
   idx: number,
   currentIdx: number,
   state: CombatState,
+  playerId: string,
+  isGM: boolean,
 ): string {
   const ap = getCurrentAp(state, c.id);
-  const actionName = ACTION_LIST.find((a) => a.id === decl.actionId)?.name ?? decl.actionId;
+  const isDone = decl.actionId === "done";
+  const actionName = isDone ? "Done" : ACTION_LIST.find((a) => a.id === decl.actionId)?.name ?? decl.actionId;
   const isCurrent = idx === currentIdx;
   const isResolved = idx < currentIdx;
   const isPending = idx > currentIdx;
@@ -68,6 +70,17 @@ function renderResolutionRow(
   if (isCurrent) rowClass += " current";
   if (isResolved) rowClass += " resolved";
   if (isPending) rowClass += " pending";
+  if (isDone) rowClass += " resolution-done";
+
+  const isOwner = c.ownerId === playerId;
+  const cardOpts: CardOptions = {
+    showAp: true,
+    showEdit: true,
+    showStatusToggle: true,
+    isGM,
+    isOwner,
+    playerId,
+  };
 
   return `
     <div class="${rowClass}">
@@ -75,12 +88,11 @@ function renderResolutionRow(
         <span class="resolution-marker">
           ${isResolved ? "&#x2713;" : isCurrent ? "&#x25B6;" : "&#x25CB;"}
         </span>
-        <span class="combatant-name">${escapeHtml(c.name)}</span>
-        <span class="ap-display">${ap} AP</span>
+        ${renderCombatantCard(c, state, cardOpts)}
       </div>
       <div class="resolution-action">
-        <span class="decl-action-label">${actionName}</span>
-        <span class="action-cost-badge">${decl.cost} AP</span>
+        <span class="decl-action-label ${isDone ? "done-label" : ""}">${actionName}</span>
+        ${isDone ? "" : `<span class="action-cost-badge">${decl.cost} AP</span>`}
       </div>
     </div>
   `;
@@ -92,6 +104,8 @@ function getNextLabel(state: CombatState): string {
   if (idx >= cycle.resolutionOrder.length) return "End Cycle";
   const id = cycle.resolutionOrder[idx];
   const c = getCombatantById(state, id);
+  const decl = cycle.declarations.find((d) => d.combatantId === id);
+  if (decl?.actionId === "done") return c ? `${escapeHtml(c.name)} (Done)` : "Done";
   return c ? escapeHtml(c.name) : "Unknown";
 }
 
@@ -102,7 +116,7 @@ function escapeHtml(s: string): string {
 export function bindResolutionEvents(
   container: HTMLElement,
   state: CombatState,
-  _playerId: string,
+  playerId: string,
   isGM: boolean,
 ): void {
   container.addEventListener("click", (e) => {
@@ -121,14 +135,30 @@ export function bindResolutionEvents(
 
 function resolveNext(state: CombatState): void {
   const cycle = state.round!.currentCycle;
-  const idx = cycle.currentResolutionIndex;
+  let idx = cycle.currentResolutionIndex;
   if (idx >= cycle.resolutionOrder.length) return;
 
   // Mark current declaration as resolved
   const currentId = cycle.resolutionOrder[idx];
-  const declarations = cycle.declarations.map((d) =>
+  let declarations = cycle.declarations.map((d) =>
     d.combatantId === currentId ? { ...d, resolved: true } : d,
   );
+
+  idx += 1;
+
+  // Auto-skip any "done" declarations
+  while (idx < cycle.resolutionOrder.length) {
+    const nextId = cycle.resolutionOrder[idx];
+    const nextDecl = declarations.find((d) => d.combatantId === nextId);
+    if (nextDecl?.actionId === "done") {
+      declarations = declarations.map((d) =>
+        d.combatantId === nextId ? { ...d, resolved: true } : d,
+      );
+      idx += 1;
+    } else {
+      break;
+    }
+  }
 
   saveState({
     ...state,
@@ -137,7 +167,7 @@ function resolveNext(state: CombatState): void {
       currentCycle: {
         ...cycle,
         declarations,
-        currentResolutionIndex: idx + 1,
+        currentResolutionIndex: idx,
       },
     },
   });
@@ -157,7 +187,6 @@ function endCycle(state: CombatState): void {
   };
 
   if (anyoneCanAct(testState)) {
-    // Start new cycle
     saveState({
       ...state,
       phase: "declaration",
@@ -174,7 +203,6 @@ function endCycle(state: CombatState): void {
       },
     });
   } else {
-    // Round end
     saveState({
       ...state,
       phase: "round-end",

@@ -782,3 +782,180 @@ input[type="checkbox"] {
   flex: 1;
   min-width: 80px;
 }
+
+/* --- Fury Custom/GM Rows --- */
+
+.fury-custom-row,
+.fury-gm-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  align-items: center;
+}
+
+.fury-custom-row input,
+.fury-gm-row input {
+  width: 70px;
+  flex-shrink: 0;
+}
+
+/* --- Combatant Card --- */
+
+.combatant-card {
+  padding: 4px 0;
+}
+
+.combatant-out {
+  opacity: 0.4;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.card-stats {
+  display: flex;
+  gap: 8px;
+  margin-top: 2px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.stat-hp {
+  color: var(--text-primary);
+}
+
+.stat-ap {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.hp-value.editable,
+.ap-editable {
+  cursor: pointer;
+  border-bottom: 1px dashed var(--text-muted);
+  padding: 0 1px;
+}
+
+.hp-value.editable:hover,
+.ap-editable:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.btn-restore-icon:hover {
+  color: var(--success);
+}
+
+.badge-danger {
+  background: rgba(224, 64, 64, 0.2);
+  color: var(--danger);
+}
+
+/* --- Inline Edit Input --- */
+
+.inline-edit-input {
+  width: 48px;
+  padding: 1px 4px;
+  background: var(--bg-primary);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-family: inherit;
+  text-align: center;
+}
+
+.inline-edit-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* --- Small Inputs --- */
+
+.input-sm {
+  width: 56px;
+  padding: 3px 6px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 11px;
+  font-family: inherit;
+}
+
+.input-sm:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+/* --- AP Roll Controls --- */
+
+.ap-roll-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.manual-ap-input {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* --- Done Button --- */
+
+.btn-done {
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  border-color: var(--border);
+  font-size: 10px;
+}
+
+.btn-done:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.decl-done {
+  border-color: var(--text-muted);
+  background: rgba(102, 102, 128, 0.05);
+}
+
+.decl-status {
+  margin-top: 4px;
+}
+
+.done-label {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.resolution-done {
+  opacity: 0.5;
+}
+
+/* --- Declaration Controls Update --- */
+
+.decl-controls {
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+/* --- Combat Footer --- */
+
+.combat-footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}

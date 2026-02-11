@@ -19,7 +19,8 @@ export type ActionId =
   | "coordinated-attack"
   | "aimed-shot"
   | "charge"
-  | "slow-action";
+  | "slow-action"
+  | "done";
 
 export interface ActionDefinition {
   id: ActionId;
