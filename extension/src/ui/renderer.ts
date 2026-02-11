@@ -261,20 +261,6 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
       }
     }
 
-    // Global toggle-status handler
-    if (action === "toggle-status" && state && isGM) {
-      const id = target.dataset.id;
-      if (id) {
-        const combatants = state.combatants.map((c) => {
-          if (c.id !== id) return c;
-          return {
-            ...c,
-            status: c.status === "active" ? ("incapacitated" as const) : ("active" as const),
-          };
-        });
-        saveState({ ...state, combatants });
-      }
-    }
   });
 
   if (!state) return;

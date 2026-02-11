@@ -5,6 +5,7 @@ import { METADATA_KEY } from "../types";
 type Listener = (state: CombatState | null) => void;
 
 let currentState: CombatState | null = null;
+let pendingWrites = 0;
 const listeners: Set<Listener> = new Set();
 
 function notifyListeners(): void {
@@ -26,15 +27,19 @@ export async function loadState(): Promise<CombatState | null> {
 }
 
 export async function saveState(state: CombatState): Promise<void> {
+  pendingWrites++;
   currentState = state;
   notifyListeners();
   await OBR.room.setMetadata({ [METADATA_KEY]: state });
+  pendingWrites--;
 }
 
 export async function clearState(): Promise<void> {
+  pendingWrites++;
   currentState = null;
   notifyListeners();
   await OBR.room.setMetadata({ [METADATA_KEY]: undefined });
+  pendingWrites--;
 }
 
 export function subscribe(listener: Listener): () => void {
@@ -46,6 +51,7 @@ export function subscribe(listener: Listener): () => void {
 
 export function initSync(): () => void {
   return OBR.room.onMetadataChange((metadata) => {
+    if (pendingWrites > 0) return;
     const raw = metadata[METADATA_KEY];
     currentState = (raw as CombatState) ?? null;
     notifyListeners();
