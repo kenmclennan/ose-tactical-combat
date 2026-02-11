@@ -15,6 +15,7 @@ export function renderResolutionView(
   state: CombatState,
   playerId: string,
   isGM: boolean,
+  partyPlayers: { id: string; name: string }[] = [],
 ): string {
   const cycle = state.round!.currentCycle;
   const order = cycle.resolutionOrder;
@@ -24,7 +25,7 @@ export function renderResolutionView(
   return `
     <div class="resolution-view">
       <div class="resolution-list">
-        ${renderGroupedRows(order, cycle, currentIdx, state, playerId, isGM)}
+        ${renderGroupedRows(order, cycle, currentIdx, state, playerId, isGM, partyPlayers)}
         ${order.length === 0 ? `<div class="empty-list">No declarations to resolve</div>` : ""}
       </div>
       ${isGM ? `
@@ -56,12 +57,18 @@ function renderGroupedRows(
   state: CombatState,
   playerId: string,
   isGM: boolean,
+  partyPlayers: { id: string; name: string }[],
 ): string {
+  // Build entries with original index (for resolved/current/pending status)
+  const entries = order.map((id, idx) => ({ id, idx }));
+
+  // Sort by current AP descending so group headers stay in order after fury changes
+  entries.sort((a, b) => getCurrentAp(state, b.id) - getCurrentAp(state, a.id));
+
   let html = "";
   let lastAp: number | null = null;
 
-  for (let idx = 0; idx < order.length; idx++) {
-    const id = order[idx];
+  for (const { id, idx } of entries) {
     const c = getCombatantById(state, id);
     const decl = cycle.declarations.find((d: Declaration) => d.combatantId === id);
     if (!c || !decl) continue;
@@ -71,7 +78,7 @@ function renderGroupedRows(
       html += `<div class="ap-group-header">${ap} AP</div>`;
       lastAp = ap;
     }
-    html += renderResolutionRow(c, decl, idx, currentIdx, state, playerId, isGM);
+    html += renderResolutionRow(c, decl, idx, currentIdx, state, playerId, isGM, partyPlayers);
   }
   return html;
 }
@@ -84,6 +91,7 @@ function renderResolutionRow(
   state: CombatState,
   playerId: string,
   isGM: boolean,
+  partyPlayers: { id: string; name: string }[],
 ): string {
   const ap = getCurrentAp(state, c.id);
   const isDone = decl.actionId === "done";
@@ -99,13 +107,16 @@ function renderResolutionRow(
   if (isDone) rowClass += " resolution-done";
 
   const isOwner = c.ownerId === playerId;
+  const ownerName = partyPlayers.find((p) => p.id === c.ownerId)?.name;
   const cardOpts: CardOptions = {
     showAp: true,
     showEdit: true,
     showStatusToggle: true,
+    showRemove: true,
     isGM,
     isOwner,
     playerId,
+    ownerName,
   };
 
   return `

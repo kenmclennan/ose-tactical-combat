@@ -69,6 +69,7 @@ function renderDeclarationRow(
     showAp: true,
     showEdit: true,
     showStatusToggle: true,
+    showRemove: true,
     isGM,
     isOwner,
     playerId,

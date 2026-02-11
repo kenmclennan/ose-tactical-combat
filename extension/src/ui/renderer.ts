@@ -119,16 +119,16 @@ function renderPhaseContent(ctx: RenderContext): string {
       phaseHtml = renderSetupView(state, playerId, isGM, ctx.partyPlayers);
       break;
     case "round-start":
-      phaseHtml = renderRoundStartView(state, playerId, isGM);
+      phaseHtml = renderRoundStartView(state, playerId, isGM, ctx.partyPlayers);
       break;
     case "declaration":
       phaseHtml = renderDeclarationView(state, playerId, isGM, ctx.partyPlayers);
       break;
     case "resolution":
-      phaseHtml = renderResolutionView(state, playerId, isGM);
+      phaseHtml = renderResolutionView(state, playerId, isGM, ctx.partyPlayers);
       break;
     case "cycle-end":
-      phaseHtml = renderResolutionView(state, playerId, isGM);
+      phaseHtml = renderResolutionView(state, playerId, isGM, ctx.partyPlayers);
       break;
     case "round-end":
       phaseHtml = renderRoundEndView(state, playerId, isGM);

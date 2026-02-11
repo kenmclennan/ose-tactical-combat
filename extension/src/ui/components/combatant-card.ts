@@ -7,10 +7,12 @@ export interface CardOptions {
   showAp: boolean;
   showEdit: boolean;
   showStatusToggle: boolean;
+  showRemove?: boolean;
   isGM: boolean;
   isOwner: boolean;
   playerId: string;
   extraActions?: string;
+  extraStats?: string;
   ownerName?: string;
   dieResult?: number;
 }
@@ -32,6 +34,7 @@ export function renderCombatantCard(
         <div class="card-actions">
           ${isOut ? `<span class="badge badge-danger">Out</span>` : ""}
           ${canEdit && opts.showEdit ? `<button class="btn-icon" data-action="edit-combatant" data-id="${c.id}" title="Edit">&#x270E;</button>` : ""}
+          ${opts.isGM && opts.showRemove ? `<button class="btn-icon btn-danger-icon" data-action="remove-combatant" data-id="${c.id}" title="Remove">&#x2715;</button>` : ""}
           ${opts.isGM && opts.showStatusToggle ? `
             <button class="btn-icon ${isOut ? "btn-restore-icon" : "btn-danger-icon"}" data-action="toggle-status" data-id="${c.id}" title="${isOut ? "Restore" : "Out of Action"}">
               ${isOut ? "&#x2764;" : "&#x2620;"}
@@ -51,11 +54,13 @@ export function renderCombatantCard(
             </span>
           ` : ""}
           ${ap !== null && opts.dieResult !== undefined ? `<span class="stat die-result">[${opts.dieResult}]</span>` : ""}
+          ${opts.extraStats ?? ""}
         </div>
       ` : `
         <div class="card-stats">
           ${ap !== null ? `<span class="stat stat-ap">${ap} AP</span>` : ""}
           ${ap !== null && opts.dieResult !== undefined ? `<span class="stat die-result">[${opts.dieResult}]</span>` : ""}
+          ${opts.extraStats ?? ""}
           <span class="stat muted">Stats hidden</span>
         </div>
       `}
@@ -85,7 +90,7 @@ export function bindCardEvents(
     }
 
     if (action === "edit-hp" && id) {
-      showInlineHpEdit(target, state, id, playerId, isGM);
+      showHpEditModal(state, id, playerId, isGM);
     }
 
     if (action === "edit-ap" && id) {
@@ -105,51 +110,59 @@ function toggleCombatantStatus(state: CombatState, id: string): void {
       status: c.status === "active" ? ("incapacitated" as const) : ("active" as const),
     };
   });
-  saveState({ ...state, combatants });
+  const newState: CombatState = { ...state, combatants };
+  // Zero AP when toggling to incapacitated
+  const toggled = combatants.find((c) => c.id === id);
+  if (toggled?.status === "incapacitated" && newState.round) {
+    newState.round = {
+      ...newState.round,
+      apCurrent: { ...newState.round.apCurrent, [id]: 0 },
+    };
+  }
+  saveState(newState);
 }
 
-function showInlineHpEdit(el: HTMLElement, state: CombatState, id: string, playerId: string, isGM: boolean): void {
+function showHpEditModal(state: CombatState, id: string, playerId: string, isGM: boolean): void {
   const c = state.combatants.find((c) => c.id === id);
   if (!c) return;
   const canEdit = isGM || c.ownerId === playerId;
   if (!canEdit) return;
 
   const current = c.stats.hpCurrent;
-  const input = document.createElement("input");
-  input.type = "number";
-  input.value = String(current);
-  input.className = "inline-edit-input";
-  input.min = "0";
-  input.max = String(c.stats.hpMax);
 
-  const parent = el.parentElement!;
-  const original = el;
-  original.style.display = "none";
-  parent.insertBefore(input, original);
-  input.focus();
-  input.select();
+  showModal(`
+    <div class="modal-overlay" data-modal-overlay="true">
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title">Edit HP for ${escapeHtml(c.name)}</span>
+          <button class="btn-icon" data-action="close-modal">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">Hit Points</label>
+          <input type="number" class="input" data-field="hp" min="0" max="${c.stats.hpMax}" value="${current}" />
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-action="close-modal">Cancel</button>
+          <button class="btn btn-primary" data-action="save-edit-hp" data-id="${id}">Save</button>
+        </div>
+      </div>
+    </div>
+  `, (action) => {
+    if (action === "save-edit-hp") {
+      const modal = document.querySelector(".modal-overlay");
+      const input = modal?.querySelector('[data-field="hp"]') as HTMLInputElement | null;
+      if (!input) return;
 
-  const commit = () => {
-    const val = parseInt(input.value);
-    if (!isNaN(val) && val !== current) {
+      const val = parseInt(input.value);
+      if (isNaN(val) || val < 0) return;
+
       const combatants = state.combatants.map((existing) =>
         existing.id === id
-          ? { ...existing, stats: { ...existing.stats, hpCurrent: Math.max(0, Math.min(val, existing.stats.hpMax)) } }
+          ? { ...existing, stats: { ...existing.stats, hpCurrent: Math.min(val, existing.stats.hpMax) } }
           : existing,
       );
       saveState({ ...state, combatants });
-    } else {
-      input.remove();
-      original.style.display = "";
-    }
-  };
-
-  input.addEventListener("blur", commit);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") commit();
-    if (e.key === "Escape") {
-      input.remove();
-      original.style.display = "";
+      closeModal();
     }
   });
 }

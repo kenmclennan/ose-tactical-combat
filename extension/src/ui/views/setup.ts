@@ -179,7 +179,7 @@ export function renderEditModal(c: Combatant, isGM: boolean, partyPlayers: Party
               <div class="form-row">
                 <label class="checkbox-label">
                   <input type="checkbox" id="edit-ap-variance" ${c.apVariance ? "checked" : ""} />
-                  Roll for variance
+                  Roll for AP
                 </label>
               </div>
             </div>
@@ -247,7 +247,7 @@ export function renderAddModal(side: CombatantSide, isGM: boolean, partyPlayers:
             <div class="form-row">
               <label class="checkbox-label">
                 <input type="checkbox" id="edit-ap-variance" ${isMonster ? "" : "checked"} />
-                Roll for variance
+                Roll for AP
               </label>
             </div>
           </div>

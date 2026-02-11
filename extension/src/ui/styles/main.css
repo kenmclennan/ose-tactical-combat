@@ -920,29 +920,6 @@ input[type="checkbox"] {
   color: var(--danger);
 }
 
-/* --- Inline Edit Input --- */
-
-.inline-edit-input {
-  width: 48px;
-  padding: 1px 4px;
-  background: var(--bg-primary);
-  border: 1px solid var(--accent);
-  border-radius: 3px;
-  color: var(--text-primary);
-  font-size: 11px;
-  font-family: inherit;
-  text-align: center;
-}
-
-.stat-ap .inline-edit-input {
-  width: 36px;
-}
-
-.inline-edit-input:focus {
-  outline: none;
-  box-shadow: 0 0 0 1px var(--accent);
-}
-
 /* --- Small Inputs --- */
 
 .input-sm {

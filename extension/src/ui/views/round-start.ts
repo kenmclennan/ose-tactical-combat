@@ -3,16 +3,33 @@ import { saveState } from "../../state/store";
 import { getActiveCombatants } from "../../state/selectors";
 import { computeStartingAp } from "../../rules/ap";
 import { rollD6 } from "../../dice/roller";
-import { renderCombatantCard, showApEditModal, type CardOptions } from "../components/combatant-card";
+import { renderCombatantCard, type CardOptions } from "../components/combatant-card";
 import { showModal, closeModal } from "../modal";
 
 export function renderRoundStartView(
   state: CombatState,
   playerId: string,
   isGM: boolean,
+  partyPlayers: { id: string; name: string }[] = [],
 ): string {
   const active = getActiveCombatants(state);
   const round = state.round!;
+
+  // Auto-assign AP for non-variance combatants
+  const needsAutoAssign = active.filter(
+    (c) => c.status === "active" && !c.surprised && !c.apVariance && round.apRolls[c.id] === undefined,
+  );
+  if (needsAutoAssign.length > 0) {
+    const apRolls = { ...round.apRolls };
+    const apCurrent = { ...round.apCurrent };
+    for (const c of needsAutoAssign) {
+      apRolls[c.id] = 0;
+      apCurrent[c.id] = c.apBase;
+    }
+    saveState({ ...state, round: { ...round, apRolls, apCurrent } });
+    return "";
+  }
+
   const allRolled = active.every((c) => round.apRolls[c.id] !== undefined);
 
   const players = active.filter((c) => c.side === "player");
@@ -31,17 +48,17 @@ export function renderRoundStartView(
           ${isGM && isRound1 ? `<button class="btn btn-sm ${playersSurprised ? "btn-warning" : "btn-secondary"}" data-action="toggle-side-surprise" data-side="player">${playersSurprised ? "Surprised" : "Surprise"}</button>` : ""}
           ${isGM ? `<button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="player">+ Add</button>` : ""}
         </div>
-        ${players.map((c) => renderApRow(c, state, playerId, isGM)).join("")}
+        ${players.map((c) => renderApRow(c, state, playerId, isGM, partyPlayers)).join("")}
       </div>
 
       <div class="combatant-section">
         <div class="section-header">
           <span class="section-title">Monsters</span>
           ${isGM && isRound1 ? `<button class="btn btn-sm ${monstersSurprised ? "btn-warning" : "btn-secondary"}" data-action="toggle-side-surprise" data-side="monster">${monstersSurprised ? "Surprised" : "Surprise"}</button>` : ""}
-          ${isGM && unrolledMonsters.length > 0 ? `<button class="btn btn-sm btn-primary" data-action="roll-monster-ap">Roll All (${unrolledMonsters.length})</button>` : ""}
+          ${isGM ? `<button class="btn btn-sm btn-primary" data-action="roll-monster-ap" ${unrolledMonsters.length > 0 ? "" : "disabled"}>Roll All</button>` : ""}
           ${isGM ? `<button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="monster">+ Add</button>` : ""}
         </div>
-        ${monsters.map((c) => renderApRow(c, state, playerId, isGM)).join("")}
+        ${monsters.map((c) => renderApRow(c, state, playerId, isGM, partyPlayers)).join("")}
       </div>
 
       ${isGM ? `
@@ -57,21 +74,24 @@ export function renderRoundStartView(
   `;
 }
 
-function renderApRow(c: Combatant, state: CombatState, playerId: string, isGM: boolean): string {
+function renderApRow(c: Combatant, state: CombatState, playerId: string, isGM: boolean, partyPlayers: { id: string; name: string }[]): string {
   const round = state.round!;
   const roll = round.apRolls[c.id];
   const ap = round.apCurrent[c.id];
   const hasRoll = roll !== undefined;
   const isOwner = c.ownerId === playerId;
   const canRoll = isGM || (isOwner && c.side === "player");
+  const ownerName = partyPlayers.find((p) => p.id === c.ownerId)?.name;
 
   const cardOpts: CardOptions = {
     showAp: false,
     showEdit: true,
     showStatusToggle: true,
+    showRemove: true,
     isGM,
     isOwner,
     playerId,
+    ownerName,
   };
 
   // Out of action - card handles styling and "Out" badge, no AP controls needed
@@ -96,7 +116,7 @@ function renderApRow(c: Combatant, state: CombatState, playerId: string, isGM: b
     `;
   }
 
-  // Already rolled - show AP in stats, die result in stats row, edit in header
+  // Already rolled - show AP in stats, die result in stats row
   if (hasRoll) {
     return `
       <div class="decl-row">
@@ -104,18 +124,17 @@ function renderApRow(c: Combatant, state: CombatState, playerId: string, isGM: b
           ...cardOpts,
           showAp: true,
           dieResult: roll,
-          extraActions: canRoll ? `<button class="btn-icon" data-action="edit-rolled-ap" data-id="${c.id}" title="Edit AP">&#x270E;</button>` : "",
         })}
       </div>
     `;
   }
 
-  // Not yet rolled - Roll button + manual input in header
+  // Not yet rolled - Roll button + manual input in stats row
   return `
     <div class="decl-row">
       ${renderCombatantCard(c, state, {
         ...cardOpts,
-        extraActions: canRoll ? `
+        extraStats: canRoll ? `
           <button class="btn btn-sm btn-primary" data-action="roll-single-ap" data-id="${c.id}">Roll</button>
           <button class="btn btn-sm btn-secondary" data-action="set-manual-ap" data-id="${c.id}">Set</button>
         ` : `<span class="ap-value pending">--</span>`,
@@ -145,9 +164,6 @@ export function bindRoundStartEvents(
         break;
       case "roll-monster-ap":
         if (isGM) rollMonsterAp(state);
-        break;
-      case "edit-rolled-ap":
-        if (id) showApEditModal(state, id);
         break;
       case "toggle-side-surprise":
         if (isGM) toggleSideSurprise(state, target.dataset.side as CombatantSide);

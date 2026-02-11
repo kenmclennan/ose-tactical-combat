@@ -31,7 +31,7 @@ export class DicePlusRoller implements DiceRoller {
 
       OBR.broadcast.sendMessage(DICE_PLUS_ROLL_CHANNEL, {
         notation,
-        label: label || "AP Variance",
+        label: label || "Roll for AP",
       });
     });
   }
