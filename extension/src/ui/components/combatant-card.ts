@@ -1,6 +1,7 @@
 import type { CombatState, Combatant } from "../../types";
 import { saveState } from "../../state/store";
 import { getCurrentAp } from "../../state/selectors";
+import { showModal, closeModal } from "../modal";
 
 export interface CardOptions {
   showAp: boolean;
@@ -46,7 +47,7 @@ export function renderCombatantCard(
           <span class="stat">THAC0 ${c.stats.thac0}</span>
           ${ap !== null ? `
             <span class="stat stat-ap">
-              <span class="${opts.isGM ? "ap-editable" : ""}" data-action="${opts.isGM ? "edit-ap" : ""}" data-id="${c.id}">${ap}</span> AP
+              <span class="${canEdit ? "ap-editable" : ""}" data-action="${canEdit ? "edit-ap" : ""}" data-id="${c.id}">${ap}</span> AP
             </span>
           ` : ""}
           ${ap !== null && opts.dieResult !== undefined ? `<span class="stat die-result">[${opts.dieResult}]</span>` : ""}
@@ -87,8 +88,11 @@ export function bindCardEvents(
       showInlineHpEdit(target, state, id, playerId, isGM);
     }
 
-    if (action === "edit-ap" && id && isGM) {
-      showInlineApEdit(target, state, id);
+    if (action === "edit-ap" && id) {
+      const c = state.combatants.find((c) => c.id === id);
+      if (c && (isGM || c.ownerId === playerId)) {
+        showApEditModal(state, id);
+      }
     }
   });
 }
@@ -150,26 +154,38 @@ function showInlineHpEdit(el: HTMLElement, state: CombatState, id: string, playe
   });
 }
 
-function showInlineApEdit(el: HTMLElement, state: CombatState, id: string): void {
+export function showApEditModal(state: CombatState, id: string): void {
   if (!state.round) return;
+  const c = state.combatants.find((c) => c.id === id);
+  if (!c) return;
   const current = state.round.apCurrent[id] ?? 0;
 
-  const input = document.createElement("input");
-  input.type = "number";
-  input.value = String(current);
-  input.className = "inline-edit-input";
-  input.min = "0";
+  showModal(`
+    <div class="modal-overlay" data-modal-overlay="true">
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title">Edit AP for ${escapeHtml(c.name)}</span>
+          <button class="btn-icon" data-action="close-modal">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">Action Points</label>
+          <input type="number" class="input" data-field="ap" min="0" value="${current}" />
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-action="close-modal">Cancel</button>
+          <button class="btn btn-primary" data-action="save-edit-ap" data-id="${id}">Save</button>
+        </div>
+      </div>
+    </div>
+  `, (action) => {
+    if (action === "save-edit-ap") {
+      const modal = document.querySelector(".modal-overlay");
+      const input = modal?.querySelector('[data-field="ap"]') as HTMLInputElement | null;
+      if (!input) return;
 
-  const parent = el.parentElement!;
-  const original = el;
-  original.style.display = "none";
-  parent.insertBefore(input, original);
-  input.focus();
-  input.select();
+      const val = parseInt(input.value);
+      if (isNaN(val) || val < 0) return;
 
-  const commit = () => {
-    const val = parseInt(input.value);
-    if (!isNaN(val) && val !== current && val >= 0) {
       saveState({
         ...state,
         round: {
@@ -177,18 +193,7 @@ function showInlineApEdit(el: HTMLElement, state: CombatState, id: string): void
           apCurrent: { ...state.round!.apCurrent, [id]: val },
         },
       });
-    } else {
-      input.remove();
-      original.style.display = "";
-    }
-  };
-
-  input.addEventListener("blur", commit);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") commit();
-    if (e.key === "Escape") {
-      input.remove();
-      original.style.display = "";
+      closeModal();
     }
   });
 }

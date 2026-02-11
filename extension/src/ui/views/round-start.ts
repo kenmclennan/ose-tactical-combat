@@ -3,7 +3,8 @@ import { saveState } from "../../state/store";
 import { getActiveCombatants } from "../../state/selectors";
 import { computeStartingAp } from "../../rules/ap";
 import { rollD6 } from "../../dice/roller";
-import { renderCombatantCard, type CardOptions } from "../components/combatant-card";
+import { renderCombatantCard, showApEditModal, type CardOptions } from "../components/combatant-card";
+import { showModal, closeModal } from "../modal";
 
 export function renderRoundStartView(
   state: CombatState,
@@ -103,7 +104,7 @@ function renderApRow(c: Combatant, state: CombatState, playerId: string, isGM: b
           ...cardOpts,
           showAp: true,
           dieResult: roll,
-          extraActions: isGM ? `<button class="btn-icon" data-action="edit-rolled-ap" data-id="${c.id}" title="Edit AP">&#x270E;</button>` : "",
+          extraActions: canRoll ? `<button class="btn-icon" data-action="edit-rolled-ap" data-id="${c.id}" title="Edit AP">&#x270E;</button>` : "",
         })}
       </div>
     `;
@@ -116,10 +117,7 @@ function renderApRow(c: Combatant, state: CombatState, playerId: string, isGM: b
         ...cardOpts,
         extraActions: canRoll ? `
           <button class="btn btn-sm btn-primary" data-action="roll-single-ap" data-id="${c.id}">Roll</button>
-          <div class="manual-ap-input">
-            <input type="number" class="input-sm" data-manual-ap="${c.id}" min="1" max="12" placeholder="AP" />
-            <button class="btn btn-sm btn-secondary" data-action="set-manual-ap" data-id="${c.id}">Set</button>
-          </div>
+          <button class="btn btn-sm btn-secondary" data-action="set-manual-ap" data-id="${c.id}">Set</button>
         ` : `<span class="ap-value pending">--</span>`,
       })}
     </div>
@@ -143,13 +141,13 @@ export function bindRoundStartEvents(
         if (id) rollSingleAp(state, id, playerId, isGM);
         break;
       case "set-manual-ap":
-        if (id) setManualAp(state, id, container, playerId, isGM);
+        if (id) showSetApModal(state, id, playerId, isGM);
         break;
       case "roll-monster-ap":
         if (isGM) rollMonsterAp(state);
         break;
       case "edit-rolled-ap":
-        if (id && isGM) showApEditInline(target, state, id);
+        if (id) showApEditModal(state, id);
         break;
       case "toggle-side-surprise":
         if (isGM) toggleSideSurprise(state, target.dataset.side as CombatantSide);
@@ -184,27 +182,50 @@ function rollSingleAp(state: CombatState, combatantId: string, playerId: string,
   });
 }
 
-function setManualAp(state: CombatState, combatantId: string, container: HTMLElement, playerId: string, isGM: boolean): void {
+function showSetApModal(state: CombatState, combatantId: string, playerId: string, isGM: boolean): void {
   const c = state.combatants.find((c) => c.id === combatantId);
   if (!c || c.status !== "active") return;
 
   const canSet = isGM || (c.ownerId === playerId && c.side === "player");
   if (!canSet) return;
 
-  const input = container.querySelector(`[data-manual-ap="${combatantId}"]`) as HTMLInputElement | null;
-  if (!input) return;
+  showModal(`
+    <div class="modal-overlay" data-modal-overlay="true">
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title">Set AP for ${c.name}</span>
+          <button class="btn-icon" data-action="close-modal">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">Action Points</label>
+          <input type="number" class="input" data-field="ap" min="1" max="12" value="1" />
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-action="close-modal">Cancel</button>
+          <button class="btn btn-primary" data-action="save-ap" data-id="${combatantId}">Save</button>
+        </div>
+      </div>
+    </div>
+  `, (action, data) => {
+    if (action === "save-ap") {
+      const modal = document.querySelector(".modal-overlay");
+      const input = modal?.querySelector('[data-field="ap"]') as HTMLInputElement | null;
+      if (!input) return;
 
-  const val = parseInt(input.value);
-  if (isNaN(val) || val < 1) return;
+      const val = parseInt(input.value);
+      if (isNaN(val) || val < 1) return;
 
-  const round = state.round!;
-  saveState({
-    ...state,
-    round: {
-      ...round,
-      apRolls: { ...round.apRolls, [combatantId]: 0 },
-      apCurrent: { ...round.apCurrent, [combatantId]: val },
-    },
+      const round = state.round!;
+      saveState({
+        ...state,
+        round: {
+          ...round,
+          apRolls: { ...round.apRolls, [combatantId]: 0 },
+          apCurrent: { ...round.apCurrent, [combatantId]: val },
+        },
+      });
+      closeModal();
+    }
   });
 }
 
@@ -226,48 +247,6 @@ function rollMonsterAp(state: CombatState): void {
   saveState({
     ...state,
     round: { ...round, apRolls, apCurrent },
-  });
-}
-
-function showApEditInline(el: HTMLElement, state: CombatState, id: string): void {
-  if (!state.round) return;
-  const current = state.round.apCurrent[id] ?? 0;
-
-  const input = document.createElement("input");
-  input.type = "number";
-  input.value = String(current);
-  input.className = "inline-edit-input";
-  input.min = "0";
-
-  const parent = el.parentElement!;
-  el.style.display = "none";
-  parent.insertBefore(input, el);
-  input.focus();
-  input.select();
-
-  const commit = () => {
-    const val = parseInt(input.value);
-    if (!isNaN(val) && val >= 0 && val !== current) {
-      saveState({
-        ...state,
-        round: {
-          ...state.round!,
-          apCurrent: { ...state.round!.apCurrent, [id]: val },
-        },
-      });
-    } else {
-      input.remove();
-      el.style.display = "";
-    }
-  };
-
-  input.addEventListener("blur", commit);
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") commit();
-    if (e.key === "Escape") {
-      input.remove();
-      el.style.display = "";
-    }
   });
 }
 
