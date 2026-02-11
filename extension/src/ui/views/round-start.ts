@@ -23,12 +23,18 @@ export function renderRoundStartView(
       <div class="round-header">Round ${round.roundNumber}</div>
 
       <div class="combatant-section">
-        <div class="section-title">Players</div>
+        <div class="section-header">
+          <span class="section-title">Players</span>
+          ${isGM ? `<button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="player">+ Add</button>` : ""}
+        </div>
         ${players.map((c) => renderApRow(c, state, playerId, isGM)).join("")}
       </div>
 
       <div class="combatant-section">
-        <div class="section-title">Monsters</div>
+        <div class="section-header">
+          <span class="section-title">Monsters</span>
+          ${isGM ? `<button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="monster">+ Add</button>` : ""}
+        </div>
         ${monsters.map((c) => renderApRow(c, state, playerId, isGM)).join("")}
         ${isGM && unrolledMonsters.length > 0 ? `
           <button class="btn btn-sm btn-accent btn-full" data-action="roll-monster-ap" style="margin-top: 4px;">
@@ -58,65 +64,69 @@ function renderApRow(c: Combatant, state: CombatState, playerId: string, isGM: b
   const hasRoll = roll !== undefined;
   const isOwner = c.ownerId === playerId;
   const canRoll = isGM || (isOwner && c.side === "player");
-  const statusClass = c.status !== "active" ? "combatant-out" : "";
 
+  const cardOpts: CardOptions = {
+    showAp: false,
+    showEdit: true,
+    showStatusToggle: true,
+    isGM,
+    isOwner,
+    playerId,
+  };
+
+  // Out of action - card handles styling and "Out" badge, no AP controls needed
   if (c.status !== "active") {
     return `
-      <div class="ap-roll-row ${statusClass}">
-        <span class="combatant-name">${escapeHtml(c.name)}</span>
-        <span class="badge badge-danger">Out</span>
+      <div class="decl-row">
+        ${renderCombatantCard(c, state, cardOpts)}
       </div>
     `;
   }
 
+  // Surprised - show AP in stats, surprised badge in header
   if (c.surprised) {
     return `
-      <div class="ap-roll-row">
-        <span class="combatant-name">${escapeHtml(c.name)}</span>
-        <div class="ap-roll-result">
-          <span class="ap-value surprised-ap">${ap ?? "?"} AP</span>
-          <span class="badge badge-warning">Surprised</span>
-        </div>
+      <div class="decl-row">
+        ${renderCombatantCard(c, state, {
+          ...cardOpts,
+          showAp: true,
+          extraActions: `<span class="badge badge-warning">Surprised</span>`,
+        })}
       </div>
     `;
   }
 
+  // Already rolled - show AP in stats, die result + edit in header
   if (hasRoll) {
     return `
-      <div class="ap-roll-row">
-        <span class="combatant-name">${escapeHtml(c.name)}</span>
-        <div class="ap-roll-result">
-          <span class="die-result">[${roll}]</span>
-          <span class="ap-value">${ap} AP</span>
-          ${isGM ? `<button class="btn-icon" data-action="edit-rolled-ap" data-id="${c.id}" title="Edit AP">&#x270E;</button>` : ""}
-        </div>
+      <div class="decl-row">
+        ${renderCombatantCard(c, state, {
+          ...cardOpts,
+          showAp: true,
+          extraActions: `
+            <span class="die-result">[${roll}]</span>
+            ${isGM ? `<button class="btn-icon" data-action="edit-rolled-ap" data-id="${c.id}" title="Edit AP">&#x270E;</button>` : ""}
+          `,
+        })}
       </div>
     `;
   }
 
-  // Not yet rolled
+  // Not yet rolled - Roll button + manual input in header
   return `
-    <div class="ap-roll-row">
-      <span class="combatant-name">${escapeHtml(c.name)}</span>
-      <div class="ap-roll-controls">
-        ${canRoll ? `
+    <div class="decl-row">
+      ${renderCombatantCard(c, state, {
+        ...cardOpts,
+        extraActions: canRoll ? `
           <button class="btn btn-sm btn-primary" data-action="roll-single-ap" data-id="${c.id}">Roll</button>
-        ` : ""}
-        ${canRoll ? `
           <div class="manual-ap-input">
             <input type="number" class="input-sm" data-manual-ap="${c.id}" min="1" max="12" placeholder="AP" />
             <button class="btn btn-sm btn-secondary" data-action="set-manual-ap" data-id="${c.id}">Set</button>
           </div>
-        ` : `
-          <span class="ap-value pending">--</span>
-        `}
-      </div>
+        ` : `<span class="ap-value pending">--</span>`,
+      })}
     </div>
   `;
-}
-
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 export function bindRoundStartEvents(

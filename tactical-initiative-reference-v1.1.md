@@ -66,7 +66,7 @@ Repeat cycles until no one has enough AP to act, then start a new round.
 
 _Your AP determines when you act. Your action choice determines what you have left._
 
-_Unspent AP does not carry over - but leftover AP banks Fury (1 per 2 leftover AP, rounded down)._
+_Unspent AP does not carry over - but leftover AP banks Fury (1 per 1 leftover AP, max 3 per player per round)._
 
 **Surprise:** Surprised combatants get half base AP (no variance roll). Players: 3 AP. Monsters: 3 AP.
 
@@ -108,7 +108,7 @@ _Unspent AP does not carry over - but leftover AP banks Fury (1 per 2 leftover A
 
 ## Fury Pool
 
-Communal pool shared by all players (monsters do not contribute or spend). At round end, each player banks 1 Fury per 2 leftover AP (rounded down). Spend at any time:
+Communal pool shared by all players (monsters do not contribute or spend). At round end, each player banks 1 Fury per 1 leftover AP (max 3 per player per round). Spend at any time:
 
 | Cost | Effect                           |
 | :--: | -------------------------------- |

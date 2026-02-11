@@ -1,5 +1,5 @@
 import type { CombatState, FuryLogEntry, FurySpendType } from "../types";
-import { FURY_AP_PER_POINT, FURY_LOG_MAX } from "../util/constants";
+import { MAX_FURY_PER_PLAYER_PER_ROUND, FURY_LOG_MAX } from "../util/constants";
 import { getPlayerCombatants, getCurrentAp } from "../state/selectors";
 
 export interface FurySpendOption {
@@ -22,7 +22,8 @@ export function calculateFuryBanked(state: CombatState): number {
   let total = 0;
   for (const p of players) {
     const leftover = getCurrentAp(state, p.id);
-    total += Math.floor(leftover / FURY_AP_PER_POINT);
+    const furyForPlayer = Math.min(leftover, MAX_FURY_PER_PLAYER_PER_ROUND);
+    total += furyForPlayer;
   }
   return total;
 }

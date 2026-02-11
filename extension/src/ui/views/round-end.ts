@@ -2,6 +2,7 @@ import type { CombatState } from "../../types";
 import { saveState } from "../../state/store";
 import { getActiveCombatants, getPlayerCombatants, getCurrentAp } from "../../state/selectors";
 import { calculateFuryBanked } from "../../rules/fury";
+import { MAX_FURY_PER_PLAYER_PER_ROUND } from "../../util/constants";
 
 export function renderRoundEndView(
   state: CombatState,
@@ -33,11 +34,12 @@ export function renderRoundEndView(
         <div class="section-title">Leftover AP</div>
         ${players.map((c) => {
           const ap = getCurrentAp(state, c.id);
-          const fury = Math.floor(ap / 2);
+          const fury = Math.min(ap, MAX_FURY_PER_PLAYER_PER_ROUND);
+          const capped = ap > MAX_FURY_PER_PLAYER_PER_ROUND;
           return `
             <div class="leftover-row">
               <span>${escapeHtml(c.name)}</span>
-              <span class="stat">${ap} AP = ${fury} Fury</span>
+              <span class="stat">${ap} AP = ${fury} Fury${capped ? ' (capped)' : ''}</span>
             </div>
           `;
         }).join("")}
