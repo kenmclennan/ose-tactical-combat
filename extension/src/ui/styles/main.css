@@ -75,6 +75,9 @@ body {
 }
 
 .phase-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   padding: 6px 12px;
   background: var(--bg-surface);
   border-bottom: 1px solid var(--border);
@@ -479,6 +482,52 @@ input[type="checkbox"] {
   color: var(--accent);
 }
 
+.fury-badge.clickable {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.fury-badge.clickable:hover {
+  background: rgba(228, 168, 50, 0.4);
+}
+
+/* --- Fury Modal --- */
+
+.fury-modal {
+  width: 280px;
+}
+
+.fury-modal-total {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.fury-modal-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.fury-modal .fury-spend-buttons {
+  width: 100%;
+}
+
+.fury-gm-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.fury-gm-controls input {
+  width: 64px;
+  text-align: center;
+}
+
 /* --- Round Start --- */
 
 .round-start-view,
@@ -786,27 +835,7 @@ input[type="checkbox"] {
   font-size: 12px;
 }
 
-/* --- Fury Panel --- */
-
-.fury-panel {
-  padding: 8px;
-  background: var(--bg-surface);
-  border-radius: var(--radius);
-  border: 1px solid var(--accent-dim);
-}
-
-.fury-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
-.fury-total {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--accent);
-}
+/* --- Fury Spend Buttons --- */
 
 .fury-spend-buttons {
   display: flex;
@@ -817,22 +846,6 @@ input[type="checkbox"] {
 .fury-spend-btn {
   flex: 1;
   min-width: 80px;
-}
-
-/* --- Fury Custom/GM Rows --- */
-
-.fury-custom-row,
-.fury-gm-row {
-  display: flex;
-  gap: 4px;
-  margin-top: 6px;
-  align-items: center;
-}
-
-.fury-custom-row input,
-.fury-gm-row input {
-  width: 70px;
-  flex-shrink: 0;
 }
 
 /* --- Combatant Card --- */

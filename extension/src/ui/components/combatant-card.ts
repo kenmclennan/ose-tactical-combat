@@ -11,6 +11,7 @@ export interface CardOptions {
   playerId: string;
   extraActions?: string;
   ownerName?: string;
+  dieResult?: number;
 }
 
 export function renderCombatantCard(
@@ -48,10 +49,12 @@ export function renderCombatantCard(
               <span class="${opts.isGM ? "ap-editable" : ""}" data-action="${opts.isGM ? "edit-ap" : ""}" data-id="${c.id}">${ap}</span> AP
             </span>
           ` : ""}
+          ${ap !== null && opts.dieResult !== undefined ? `<span class="stat die-result">[${opts.dieResult}]</span>` : ""}
         </div>
       ` : `
         <div class="card-stats">
           ${ap !== null ? `<span class="stat stat-ap">${ap} AP</span>` : ""}
+          ${ap !== null && opts.dieResult !== undefined ? `<span class="stat die-result">[${opts.dieResult}]</span>` : ""}
           <span class="stat muted">Stats hidden</span>
         </div>
       `}

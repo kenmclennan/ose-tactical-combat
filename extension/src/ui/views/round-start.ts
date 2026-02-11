@@ -37,14 +37,10 @@ export function renderRoundStartView(
         <div class="section-header">
           <span class="section-title">Monsters</span>
           ${isGM && isRound1 ? `<button class="btn btn-sm ${monstersSurprised ? "btn-warning" : "btn-secondary"}" data-action="toggle-side-surprise" data-side="monster">${monstersSurprised ? "Surprised" : "Surprise"}</button>` : ""}
+          ${isGM && unrolledMonsters.length > 0 ? `<button class="btn btn-sm btn-primary" data-action="roll-monster-ap">Roll All (${unrolledMonsters.length})</button>` : ""}
           ${isGM ? `<button class="btn btn-sm btn-accent" data-action="add-combatant" data-side="monster">+ Add</button>` : ""}
         </div>
         ${monsters.map((c) => renderApRow(c, state, playerId, isGM)).join("")}
-        ${isGM && unrolledMonsters.length > 0 ? `
-          <button class="btn btn-sm btn-accent btn-full" data-action="roll-monster-ap" style="margin-top: 4px;">
-            Roll Monsters (${unrolledMonsters.length})
-          </button>
-        ` : ""}
       </div>
 
       ${isGM ? `
@@ -100,17 +96,15 @@ function renderApRow(c: Combatant, state: CombatState, playerId: string, isGM: b
     `;
   }
 
-  // Already rolled - show AP in stats, die result + edit in header
+  // Already rolled - show AP in stats, die result in stats row, edit in header
   if (hasRoll) {
     return `
       <div class="decl-row">
         ${renderCombatantCard(c, state, {
           ...cardOpts,
           showAp: true,
-          extraActions: `
-            <span class="die-result">[${roll}]</span>
-            ${isGM ? `<button class="btn-icon" data-action="edit-rolled-ap" data-id="${c.id}" title="Edit AP">&#x270E;</button>` : ""}
-          `,
+          dieResult: roll,
+          extraActions: isGM ? `<button class="btn-icon" data-action="edit-rolled-ap" data-id="${c.id}" title="Edit AP">&#x270E;</button>` : "",
         })}
       </div>
     `;
@@ -289,21 +283,31 @@ function toggleSideSurprise(state: CombatState, side: CombatantSide): void {
     return { ...c, surprised: newSurprised };
   });
 
-  // Recalculate AP for any combatants that already have rolls
+  // Recalculate AP - surprised AP ignores the roll, so we can auto-set it
   const round = state.round!;
+  const apRolls = { ...round.apRolls };
   const apCurrent = { ...round.apCurrent };
   for (const c of combatants) {
     if (c.side !== side || c.status !== "active") continue;
-    const roll = round.apRolls[c.id];
-    if (roll !== undefined) {
-      apCurrent[c.id] = computeStartingAp(c.apBase, roll, c.dexCategory, c.apVariance, c.surprised);
+    if (newSurprised) {
+      // Auto-set AP for all (surprised ignores roll)
+      apCurrent[c.id] = computeStartingAp(c.apBase, 0, c.dexCategory, c.apVariance, true);
+      if (apRolls[c.id] === undefined) apRolls[c.id] = 0;
+    } else {
+      // Un-surprise: recalculate if they have a real roll, clear if auto-rolled
+      if (apRolls[c.id] === 0) {
+        delete apRolls[c.id];
+        delete apCurrent[c.id];
+      } else if (apRolls[c.id] !== undefined) {
+        apCurrent[c.id] = computeStartingAp(c.apBase, apRolls[c.id], c.dexCategory, c.apVariance, false);
+      }
     }
   }
 
   saveState({
     ...state,
     combatants,
-    round: { ...round, apCurrent },
+    round: { ...round, apRolls, apCurrent },
   });
 }
 

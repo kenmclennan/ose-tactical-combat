@@ -9,7 +9,7 @@ import { renderRoundStartView, bindRoundStartEvents } from "./views/round-start"
 import { renderDeclarationView, bindDeclarationEvents } from "./views/declaration";
 import { renderResolutionView, bindResolutionEvents } from "./views/resolution";
 import { renderRoundEndView, bindRoundEndEvents } from "./views/round-end";
-import { renderFuryPanel, bindFuryEvents } from "./components/fury-panel";
+import { showFuryModal } from "./components/fury-panel";
 import { bindCardEvents } from "./components/combatant-card";
 
 const PHASE_LABELS: Record<CombatPhase, string> = {
@@ -46,15 +46,15 @@ export function render(app: HTMLElement, ctx: RenderContext): void {
   const roundInfo = state?.round
     ? `Round ${state.round.roundNumber}, Cycle ${state.round.currentCycle.cycleNumber}`
     : "";
-  const furyInfo = state && state.fury.current > 0
-    ? `<span class="fury-badge">${state.fury.current} Fury</span>`
+  const showFuryBadge = state && phase && phase !== "setup" && phase !== "combat-end";
+  const furyBadgeHtml = showFuryBadge
+    ? `<span class="fury-badge clickable" data-action="open-fury-modal">${state!.fury.current} Fury</span>`
     : "";
 
   app.innerHTML = `
     <div class="header">
       <span class="header-title">Tactical Initiative</span>
       <div style="display: flex; align-items: center; gap: 8px;">
-        ${furyInfo}
         <span class="role-badge ${roleBadge}">${playerRole}</span>
         <span class="status-badge ${statusClass}">
           <span class="status-dot"></span>
@@ -62,11 +62,19 @@ export function render(app: HTMLElement, ctx: RenderContext): void {
         </span>
       </div>
     </div>
-    ${phase ? `<div class="phase-banner">${PHASE_LABELS[phase]}${roundInfo ? ` - ${roundInfo}` : ""}</div>` : ""}
+    ${phase ? `<div class="phase-banner"><span>${PHASE_LABELS[phase]}${roundInfo ? ` - ${roundInfo}` : ""}</span>${furyBadgeHtml}</div>` : ""}
     <div class="content" id="phase-content">
       ${renderPhaseContent(ctx)}
     </div>
   `;
+
+  // Bind fury badge click (in phase banner, outside #phase-content)
+  const furyBadge = app.querySelector("[data-action='open-fury-modal']") as HTMLElement | null;
+  if (furyBadge && state) {
+    furyBadge.addEventListener("click", () => {
+      showFuryModal(state, ctx.playerId, isGM);
+    });
+  }
 
   const content = app.querySelector("#phase-content") as HTMLElement;
   if (content) {
@@ -138,12 +146,6 @@ function renderPhaseContent(ctx: RenderContext): string {
       phaseHtml = `<div class="empty-state">Unknown phase</div>`;
   }
 
-
-  // Persistent fury panel - show during all combat phases
-  const showFury = state.phase !== "setup" && state.phase !== "combat-end";
-  if (showFury) {
-    phaseHtml += renderFuryPanel(state, isGM);
-  }
 
   // Append persistent "End Combat" footer for GM during active combat phases
   const showEndCombat = isGM && state.phase !== "setup" && state.phase !== "combat-end";
@@ -280,12 +282,6 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
   // Bind card events (inline HP/AP editing) for phases that use combatant cards
   if (state.phase !== "setup") {
     bindCardEvents(content, state, playerId, isGM, partyPlayers);
-  }
-
-  // Bind fury events when fury panel is visible
-  const showFury = state.phase !== "setup" && state.phase !== "combat-end";
-  if (showFury) {
-    bindFuryEvents(content, state, playerId, isGM);
   }
 
   // Phase-specific events
