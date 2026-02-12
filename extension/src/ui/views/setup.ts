@@ -75,7 +75,7 @@ function renderSetupCard(
   };
 
   const extraStats = showStats
-    ? `<span class="stat">AP ${c.apBase}${c.apVariance ? "±" : ""}</span><span class="stat">${dexLabels[c.dexCategory]}</span>`
+    ? `<span class="stat stat-ap">${c.apBase} AP${c.apVariance ? " ±" : ""} ${dexLabels[c.dexCategory]}</span>`
     : "";
 
   const extraActions = [

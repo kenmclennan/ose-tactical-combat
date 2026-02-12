@@ -81,7 +81,7 @@ function renderApRow(c: Combatant, state: CombatState, playerId: string, isGM: b
   const hasRoll = roll !== undefined;
   const isOwner = c.ownerId === playerId;
   const canRoll = isGM || (isOwner && c.side === "player");
-  const ownerName = partyPlayers.find((p) => p.id === c.ownerId)?.name;
+  const ownerName = c.side === "monster" ? "GM" : partyPlayers.find((p) => p.id === c.ownerId)?.name;
 
   const cardOpts: CardOptions = {
     showAp: false,
@@ -116,14 +116,14 @@ function renderApRow(c: Combatant, state: CombatState, playerId: string, isGM: b
     `;
   }
 
-  // Already rolled - show AP in stats, die result in stats row
+  // Already rolled - show AP in stats, die result only if they actually roll
   if (hasRoll) {
     return `
       <div class="decl-row">
         ${renderCombatantCard(c, state, {
           ...cardOpts,
           showAp: true,
-          dieResult: roll,
+          dieResult: c.apVariance ? roll : undefined,
         })}
       </div>
     `;

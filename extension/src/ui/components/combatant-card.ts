@@ -58,10 +58,10 @@ export function renderCombatantCard(
         </div>
       ` : `
         <div class="card-stats">
+          <span class="stat muted">Stats hidden</span>
+          ${opts.extraStats ?? ""}
           ${ap !== null ? `<span class="stat stat-ap">${ap} AP</span>` : ""}
           ${ap !== null && opts.dieResult !== undefined ? `<span class="stat die-result">[${opts.dieResult}]</span>` : ""}
-          ${opts.extraStats ?? ""}
-          <span class="stat muted">Stats hidden</span>
         </div>
       `}
       ${(opts.statusContent || isOut) ? `

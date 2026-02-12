@@ -709,8 +709,6 @@ input[type="checkbox"] {
 }
 
 .resolution-row {
-  display: flex;
-  align-items: center;
   padding: 8px;
   background: var(--bg-surface);
   border-radius: var(--radius);

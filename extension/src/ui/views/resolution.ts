@@ -107,8 +107,10 @@ function renderResolutionRow(
   if (isDone) rowClass += " resolution-done";
 
   const isOwner = c.ownerId === playerId;
-  const ownerName = partyPlayers.find((p) => p.id === c.ownerId)?.name;
+  const ownerName = c.side === "monster" ? "GM" : partyPlayers.find((p) => p.id === c.ownerId)?.name;
+  const marker = isResolved ? "&#x2713;" : isCurrent ? "&#x25B6;" : "&#x25CB;";
   const statusContent = `
+    <span class="resolution-marker">${marker}</span>
     <span class="decl-action-label ${isDone ? "done-label" : ""}">${actionName}</span>
     ${isDone ? "" : `<span class="action-cost-badge">${decl.cost} AP</span>`}
   `;
@@ -126,12 +128,7 @@ function renderResolutionRow(
 
   return `
     <div class="${rowClass}">
-      <div class="resolution-info">
-        <span class="resolution-marker">
-          ${isResolved ? "&#x2713;" : isCurrent ? "&#x25B6;" : "&#x25CB;"}
-        </span>
-        ${renderCombatantCard(c, state, cardOpts)}
-      </div>
+      ${renderCombatantCard(c, state, cardOpts)}
     </div>
   `;
 }

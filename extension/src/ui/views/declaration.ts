@@ -41,11 +41,12 @@ export function renderDeclarationView(
       </div>
       ${isGM ? `
         <div class="declaration-actions">
-          <button class="btn btn-primary btn-full" data-action="advance-resolution" ${allLocked ? "" : "disabled"}>
-            Resolve Actions
-          </button>
           ${!allLocked ? `<div class="hint">Waiting for all declarations to lock in</div>` : ""}
-          <button class="btn btn-sm btn-secondary btn-full" data-action="force-end-round">End Round</button>
+          <div class="round-actions-row">
+            <button class="btn btn-secondary" data-action="end-combat">End Combat</button>
+            <button class="btn btn-secondary" data-action="force-end-round">End Round</button>
+            <button class="btn btn-primary" data-action="advance-resolution" ${allLocked ? "" : "disabled"}>Resolve Actions</button>
+          </div>
         </div>
       ` : ""}
     </div>
@@ -63,7 +64,7 @@ function renderDeclarationRow(
   const decl = getDeclaration(state, c.id);
   const isOwner = c.ownerId === playerId;
   const canDeclare = (isGM && c.side === "monster") || isOwner;
-  const ownerName = partyPlayers.find((p) => p.id === c.ownerId)?.name;
+  const ownerName = c.side === "monster" ? "GM" : partyPlayers.find((p) => p.id === c.ownerId)?.name;
 
   const cardOpts: CardOptions = {
     showAp: true,
