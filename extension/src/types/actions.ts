@@ -22,9 +22,12 @@ export type ActionId =
   | "slow-action"
   | "done";
 
+export type ActionCategory = "move" | "act" | "other";
+
 export interface ActionDefinition {
   id: ActionId;
   name: string;
   cost: number;
   description: string;
+  category: ActionCategory;
 }

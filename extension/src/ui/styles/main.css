@@ -729,6 +729,15 @@ input[type="checkbox"] {
   flex: 1;
 }
 
+.action-group-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  padding: 6px 4px 2px;
+}
+
 /* --- Resolution --- */
 
 .resolution-list {
@@ -748,8 +757,8 @@ input[type="checkbox"] {
 
 .resolution-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
   padding: 8px;
   background: var(--bg-surface);
   border-radius: var(--radius);
@@ -773,6 +782,7 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;
   gap: 6px;
+  width: 100%;
 }
 
 .resolution-marker {
@@ -786,6 +796,7 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-left: auto;
 }
 
 .action-cost-badge {

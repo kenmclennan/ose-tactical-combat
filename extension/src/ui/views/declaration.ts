@@ -7,7 +7,7 @@ import {
   allDeclarationsLocked,
   isDoneForRound,
 } from "../../state/selectors";
-import { ACTION_LIST, ACTIONS } from "../../rules/actions";
+import { ACTION_LIST, ACTIONS, CATEGORY_ORDER, CATEGORY_LABELS } from "../../rules/actions";
 import { buildResolutionOrder, deductCycleCosts } from "../../rules/resolution";
 import { renderCombatantCard, type CardOptions } from "../components/combatant-card";
 
@@ -170,24 +170,34 @@ function renderActionPicker(
 ): string {
   // Filter out "done" from the action list - it has its own button
   const actions = ACTION_LIST.filter((a) => a.id !== "done");
+
+  const renderButton = (a: typeof actions[number]) => {
+    const affordable = a.cost <= ap;
+    const selected = currentDecl?.actionId === a.id;
+    return `
+      <button
+        class="action-btn ${selected ? "selected" : ""} ${affordable ? "" : "unaffordable"}"
+        data-action="select-action"
+        data-combatant-id="${combatantId}"
+        data-action-id="${a.id}"
+        data-cost="${a.cost}"
+        ${affordable ? "" : "disabled"}
+        title="${a.description}"
+      >
+        <span class="action-cost">${a.cost}</span>
+        <span class="action-name">${a.name}</span>
+      </button>
+    `;
+  };
+
   return `
     <div class="action-list">
-      ${actions.map((a) => {
-        const affordable = a.cost <= ap;
-        const selected = currentDecl?.actionId === a.id;
+      ${CATEGORY_ORDER.map((cat) => {
+        const group = actions.filter((a) => a.category === cat);
+        if (group.length === 0) return "";
         return `
-          <button
-            class="action-btn ${selected ? "selected" : ""} ${affordable ? "" : "unaffordable"}"
-            data-action="select-action"
-            data-combatant-id="${combatantId}"
-            data-action-id="${a.id}"
-            data-cost="${a.cost}"
-            ${affordable ? "" : "disabled"}
-            title="${a.description}"
-          >
-            <span class="action-cost">${a.cost}</span>
-            <span class="action-name">${a.name}</span>
-          </button>
+          <div class="action-group-label">${CATEGORY_LABELS[cat]}</div>
+          ${group.map(renderButton).join("")}
         `;
       }).join("")}
     </div>

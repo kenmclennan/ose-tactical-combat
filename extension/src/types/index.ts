@@ -6,7 +6,7 @@ export type {
   Combatant,
 } from "./combatant";
 
-export type { ActionId, ActionDefinition } from "./actions";
+export type { ActionId, ActionCategory, ActionDefinition } from "./actions";
 
 export type { FurySpendType, FuryLogEntry } from "./fury";
 
