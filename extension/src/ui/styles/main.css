@@ -256,32 +256,9 @@ body {
   font-style: italic;
 }
 
-.combatant-row {
-  padding: 6px 8px;
-  background: var(--bg-surface);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-}
-
-.combatant-row.surprised {
-  border-left: 3px solid var(--accent);
-}
-
-.combatant-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
 .combatant-name {
   font-weight: 600;
   font-size: 13px;
-}
-
-.combatant-badges {
-  display: flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .badge {
@@ -302,13 +279,6 @@ body {
 .badge-info {
   background: rgba(100, 140, 220, 0.2);
   color: #88aadd;
-}
-
-.combatant-stats {
-  display: flex;
-  gap: 8px;
-  margin-top: 3px;
-  flex-wrap: wrap;
 }
 
 .stat {
@@ -553,17 +523,6 @@ input[type="checkbox"] {
   gap: 2px;
 }
 
-.ap-roll-row {
-  padding: 6px 8px;
-  background: var(--bg-surface);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-}
-
-.ap-roll-row .ap-roll-controls {
-  margin-top: 4px;
-}
-
 .ap-roll-result {
   display: flex;
   align-items: center;
@@ -663,12 +622,6 @@ input[type="checkbox"] {
   color: var(--text-primary);
 }
 
-.decl-controls {
-  margin-top: 6px;
-  display: flex;
-  justify-content: flex-end;
-}
-
 /* --- Action Picker --- */
 
 .action-list {
@@ -757,7 +710,6 @@ input[type="checkbox"] {
 
 .resolution-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   padding: 8px;
   background: var(--bg-surface);
@@ -782,7 +734,6 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;
   gap: 6px;
-  width: 100%;
 }
 
 .resolution-marker {
@@ -790,13 +741,6 @@ input[type="checkbox"] {
   width: 16px;
   text-align: center;
   color: var(--accent);
-}
-
-.resolution-action {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-left: auto;
 }
 
 .action-cost-badge {
@@ -885,7 +829,7 @@ input[type="checkbox"] {
   justify-content: space-between;
 }
 
-.card-actions {
+.card-controls {
   display: flex;
   align-items: center;
   gap: 2px;
@@ -897,6 +841,13 @@ input[type="checkbox"] {
   margin-top: 2px;
   flex-wrap: wrap;
   align-items: center;
+}
+
+.card-status {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .stat-hp {
@@ -955,6 +906,7 @@ input[type="checkbox"] {
   display: flex;
   align-items: center;
   gap: 6px;
+  margin-left: auto;
 }
 
 .manual-ap-input {
@@ -980,10 +932,6 @@ input[type="checkbox"] {
 .decl-done {
   border-color: var(--text-muted);
   background: rgba(102, 102, 128, 0.05);
-}
-
-.decl-status {
-  margin-top: 4px;
 }
 
 .done-label {

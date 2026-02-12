@@ -108,6 +108,10 @@ function renderResolutionRow(
 
   const isOwner = c.ownerId === playerId;
   const ownerName = partyPlayers.find((p) => p.id === c.ownerId)?.name;
+  const statusContent = `
+    <span class="decl-action-label ${isDone ? "done-label" : ""}">${actionName}</span>
+    ${isDone ? "" : `<span class="action-cost-badge">${decl.cost} AP</span>`}
+  `;
   const cardOpts: CardOptions = {
     showAp: true,
     showEdit: true,
@@ -117,6 +121,7 @@ function renderResolutionRow(
     isOwner,
     playerId,
     ownerName,
+    statusContent,
   };
 
   return `
@@ -126,10 +131,6 @@ function renderResolutionRow(
           ${isResolved ? "&#x2713;" : isCurrent ? "&#x25B6;" : "&#x25CB;"}
         </span>
         ${renderCombatantCard(c, state, cardOpts)}
-      </div>
-      <div class="resolution-action">
-        <span class="decl-action-label ${isDone ? "done-label" : ""}">${actionName}</span>
-        ${isDone ? "" : `<span class="action-cost-badge">${decl.cost} AP</span>`}
       </div>
     </div>
   `;

@@ -15,6 +15,7 @@ export interface CardOptions {
   extraStats?: string;
   ownerName?: string;
   dieResult?: number;
+  statusContent?: string;
 }
 
 export function renderCombatantCard(
@@ -31,15 +32,14 @@ export function renderCombatantCard(
     <div class="combatant-card ${isOut ? "combatant-out" : ""}" data-combatant-id="${c.id}">
       <div class="card-header">
         <span class="combatant-name">${escapeHtml(c.name)}${opts.ownerName ? ` <span class="owner-name">(${escapeHtml(opts.ownerName)})</span>` : ""}</span>
-        <div class="card-actions">
-          ${isOut ? `<span class="badge badge-danger">Out</span>` : ""}
+        <div class="card-controls">
           ${canEdit && opts.showEdit ? `<button class="btn-icon" data-action="edit-combatant" data-id="${c.id}" title="Edit">&#x270E;</button>` : ""}
-          ${opts.isGM && opts.showRemove ? `<button class="btn-icon btn-danger-icon" data-action="remove-combatant" data-id="${c.id}" title="Remove">&#x2715;</button>` : ""}
           ${opts.isGM && opts.showStatusToggle ? `
             <button class="btn-icon ${isOut ? "btn-restore-icon" : "btn-danger-icon"}" data-action="toggle-status" data-id="${c.id}" title="${isOut ? "Restore" : "Out of Action"}">
               ${isOut ? "&#x2764;" : "&#x2620;"}
             </button>
           ` : ""}
+          ${opts.isGM && opts.showRemove ? `<button class="btn-icon btn-danger-icon" data-action="remove-combatant" data-id="${c.id}" title="Remove">&#x2715;</button>` : ""}
           ${opts.extraActions ?? ""}
         </div>
       </div>
@@ -64,6 +64,11 @@ export function renderCombatantCard(
           <span class="stat muted">Stats hidden</span>
         </div>
       `}
+      ${(opts.statusContent || isOut) ? `
+        <div class="card-status">
+          ${opts.statusContent ?? '<span class="stat muted">Out of action</span>'}
+        </div>
+      ` : ""}
     </div>
   `;
 }

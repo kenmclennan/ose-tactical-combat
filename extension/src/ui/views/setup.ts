@@ -7,6 +7,7 @@ import { getPlayerCombatants, getMonsterCombatants } from "../../state/selectors
 import { computeStartingAp } from "../../rules/ap";
 import { rollD6 } from "../../dice/roller";
 import { showModal, closeModal } from "../modal";
+import { renderCombatantCard, type CardOptions } from "../components/combatant-card";
 
 export function renderSetupView(
   state: CombatState,
@@ -28,7 +29,7 @@ export function renderSetupView(
         </div>
         <div class="combatant-list">
           ${players.length === 0 ? `<div class="empty-list">No players added</div>` : ""}
-          ${players.map((c) => renderCombatantRow(c, playerId, isGM)).join("")}
+          ${players.map((c) => renderSetupCard(c, state, playerId, isGM)).join("")}
         </div>
       </div>
 
@@ -39,7 +40,7 @@ export function renderSetupView(
         </div>
         <div class="combatant-list">
           ${monsters.length === 0 ? `<div class="empty-list">No monsters added</div>` : ""}
-          ${monsters.map((c) => renderCombatantRow(c, playerId, isGM)).join("")}
+          ${monsters.map((c) => renderSetupCard(c, state, playerId, isGM)).join("")}
         </div>
       </div>
 
@@ -58,49 +59,47 @@ export function renderSetupView(
   `;
 }
 
-function renderCombatantRow(
+function renderSetupCard(
   c: Combatant,
+  state: CombatState,
   playerId: string,
   isGM: boolean,
 ): string {
   const isOwner = c.ownerId === playerId;
-  const canEdit = isGM || isOwner;
   const showStats = isGM || c.side === "player";
 
+  const dexLabels: Record<DexCategory, string> = {
+    penalty: "DEX-",
+    standard: "DEX",
+    bonus: "DEX+",
+  };
+
+  const extraStats = showStats
+    ? `<span class="stat">AP ${c.apBase}${c.apVariance ? "±" : ""}</span><span class="stat">${dexLabels[c.dexCategory]}</span>`
+    : "";
+
+  const extraActions = [
+    c.surprised ? `<span class="badge badge-warning">Surprised</span>` : "",
+    c.tokenId ? `<span class="badge badge-info">Token</span>` : "",
+  ].filter(Boolean).join("");
+
+  const cardOpts: CardOptions = {
+    showAp: false,
+    showEdit: true,
+    showStatusToggle: false,
+    showRemove: true,
+    isGM,
+    isOwner,
+    playerId,
+    extraStats,
+    extraActions,
+  };
+
   return `
-    <div class="combatant-row ${c.surprised ? "surprised" : ""}" data-id="${c.id}">
-      <div class="combatant-header">
-        <span class="combatant-name">${escapeHtml(c.name)}</span>
-        <div class="combatant-badges">
-          ${c.surprised ? `<span class="badge badge-warning">Surprised</span>` : ""}
-          ${c.tokenId ? `<span class="badge badge-info">Token</span>` : ""}
-          ${canEdit ? `<button class="btn-icon" data-action="edit-combatant" data-id="${c.id}" title="Edit">&#x270E;</button>` : ""}
-          ${isGM ? `<button class="btn-icon btn-danger-icon" data-action="remove-combatant" data-id="${c.id}" title="Remove">&#x2715;</button>` : ""}
-        </div>
-      </div>
-      ${showStats ? `
-        <div class="combatant-stats">
-          <span class="stat">HP ${c.stats.hpCurrent}/${c.stats.hpMax}</span>
-          <span class="stat">AC ${c.stats.ac}</span>
-          <span class="stat">THAC0 ${c.stats.thac0}</span>
-          <span class="stat">AP ${c.apBase}${c.apVariance ? "±" : ""}</span>
-          <span class="stat">${dexLabel(c.dexCategory)}</span>
-        </div>
-      ` : `
-        <div class="combatant-stats">
-          <span class="stat muted">${c.side === "monster" ? "Stats hidden" : ""}</span>
-        </div>
-      `}
+    <div class="decl-row ${c.surprised ? "surprised" : ""}">
+      ${renderCombatantCard(c, state, cardOpts)}
     </div>
   `;
-}
-
-function dexLabel(cat: DexCategory): string {
-  switch (cat) {
-    case "penalty": return "DEX-";
-    case "standard": return "DEX";
-    case "bonus": return "DEX+";
-  }
 }
 
 function escapeHtml(s: string): string {

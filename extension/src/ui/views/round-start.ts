@@ -135,8 +135,10 @@ function renderApRow(c: Combatant, state: CombatState, playerId: string, isGM: b
       ${renderCombatantCard(c, state, {
         ...cardOpts,
         extraStats: canRoll ? `
-          <button class="btn btn-sm btn-primary" data-action="roll-single-ap" data-id="${c.id}">Roll</button>
-          <button class="btn btn-sm btn-secondary" data-action="set-manual-ap" data-id="${c.id}">Set</button>
+          <div class="ap-roll-controls">
+            <button class="btn btn-sm btn-primary" data-action="roll-single-ap" data-id="${c.id}">Roll</button>
+            <button class="btn btn-sm btn-secondary" data-action="set-manual-ap" data-id="${c.id}">Set</button>
+          </div>
         ` : `<span class="ap-value pending">--</span>`,
       })}
     </div>

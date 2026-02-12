@@ -78,7 +78,7 @@ function renderDeclarationRow(
 
   if (c.status !== "active") {
     return `
-      <div class="decl-row combatant-out">
+      <div class="decl-row">
         ${renderCombatantCard(c, state, cardOpts)}
       </div>
     `;
@@ -87,13 +87,10 @@ function renderDeclarationRow(
   // Done for the round - show with no action picker, GM can undo
   const doneForRound = isDoneForRound(state, c.id);
   if (doneForRound) {
+    const doneStatus = `<span class="stat muted">Done for round</span>${isGM ? `<button class="btn-icon" data-action="undo-done-for-round" data-combatant-id="${c.id}" title="Undo done">&#x21A9;</button>` : ""}`;
     return `
       <div class="decl-row decl-done">
-        ${renderCombatantCard(c, state, cardOpts)}
-        <div class="decl-status">
-          <span class="stat muted">Done for round</span>
-          ${isGM ? `<button class="btn-icon" data-action="undo-done-for-round" data-combatant-id="${c.id}" title="Undo done">&#x21A9;</button>` : ""}
-        </div>
+        ${renderCombatantCard(c, state, { ...cardOpts, statusContent: doneStatus })}
       </div>
     `;
   }
@@ -101,8 +98,7 @@ function renderDeclarationRow(
   if (ap < 1) {
     return `
       <div class="decl-row">
-        ${renderCombatantCard(c, state, cardOpts)}
-        <div class="decl-status"><span class="stat muted">No AP remaining</span></div>
+        ${renderCombatantCard(c, state, { ...cardOpts, statusContent: '<span class="stat muted">No AP remaining</span>' })}
       </div>
     `;
   }
@@ -137,19 +133,17 @@ function renderDeclarationRow(
       : showAction
         ? ACTION_LIST.find((a) => a.id === decl.actionId)?.name ?? decl.actionId
         : null;
+    const lockedStatus = showAction
+      ? `<span class="decl-action-label">${actionName}${isDone ? "" : ` (${decl.cost} AP)`}</span>`
+      : `<span class="badge badge-info">Locked</span>`;
     const lockedCardOpts: CardOptions = {
       ...cardOpts,
       extraActions: isGM ? `<button class="btn-icon" data-action="unlock-declaration" data-combatant-id="${c.id}" title="Unlock">&#x1F513;</button>` : undefined,
+      statusContent: lockedStatus,
     };
     return `
       <div class="decl-row decl-locked ${isDone ? "decl-done" : ""}">
         ${renderCombatantCard(c, state, lockedCardOpts)}
-        <div class="decl-status">
-          ${showAction
-            ? `<span class="decl-action-label">${actionName}${isDone ? "" : ` (${decl.cost} AP)`}</span>`
-            : `<span class="badge badge-info">Locked</span>`
-          }
-        </div>
       </div>
     `;
   }
@@ -157,8 +151,7 @@ function renderDeclarationRow(
   // Someone else's unlocked combatant - show "declaring..."
   return `
     <div class="decl-row decl-undeclared">
-      ${renderCombatantCard(c, state, cardOpts)}
-      <div class="decl-status"><span class="stat muted">Declaring...</span></div>
+      ${renderCombatantCard(c, state, { ...cardOpts, statusContent: '<span class="stat muted">Declaring...</span>' })}
     </div>
   `;
 }
