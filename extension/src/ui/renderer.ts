@@ -272,10 +272,8 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
 
   if (!state) return;
 
-  // Bind card events (inline HP/AP editing) for phases that use combatant cards
-  if (state.phase !== "setup") {
-    bindCardEvents(content, state, playerId, isGM, partyPlayers);
-  }
+  // Bind card events (inline HP/AP editing) for all phases with combatant cards
+  bindCardEvents(content, state, playerId, isGM, partyPlayers);
 
   // Phase-specific events
   switch (state.phase) {
