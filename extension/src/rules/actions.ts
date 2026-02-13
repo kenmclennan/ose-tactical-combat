@@ -10,7 +10,7 @@ export const ACTIONS: Record<ActionId, ActionDefinition> = {
 
   // Act actions
   "unarmed-attack": { id: "unarmed-attack", name: "Unarmed Attack", cost: 2, description: "1d2+STR damage", category: "act", displayOrder: 0 },
-  attack: { id: "attack", name: "Attack", cost: 3, description: "Strike foe; melee or ranged", category: "act", displayOrder: 1 },
+  attack: { id: "attack", name: "Attack (Melee/Missile)", cost: 3, description: "Strike foe; melee or ranged", category: "act", displayOrder: 1 },
   "two-handed-attack": { id: "two-handed-attack", name: "Two-Handed Attack", cost: 4, description: "Strike with two-handed weapon", category: "act", displayOrder: 2 },
   "cast-spell": { id: "cast-spell", name: "Cast Spell", cost: 4, description: "Cast a prepared spell", category: "act", displayOrder: 3 },
   "aimed-shot": { id: "aimed-shot", name: "Aimed Shot", cost: 5, description: "Ranged attack with +2 to hit", category: "act", displayOrder: 4 },
@@ -25,14 +25,14 @@ export const ACTIONS: Record<ActionId, ActionDefinition> = {
   "break-free": { id: "break-free", name: "Break Free", cost: 2, description: "Escape grapple (STR vs STR or DEX); includes half move", category: "other", displayOrder: 6 },
   action: { id: "action", name: "Action", cost: 3, description: "Non-combat activity (drink potion, use item, etc.)", category: "other", displayOrder: 7 },
   grapple: { id: "grapple", name: "Grapple", cost: 3, description: "Opposed STR; win = grapple, lose = action wasted", category: "other", displayOrder: 8 },
-  "coordinated-attack": { id: "coordinated-attack", name: "Coordinated Attack", cost: 4, description: "Attack with allies vs same target; +1 to hit, +1 damage per extra attacker", category: "other", displayOrder: 9 },
+  "coordinated-attack": { id: "coordinated-attack", name: "Coordinated Attack", cost: 4, description: "Attack with allies vs same target; +1 to hit, +1 damage per extra attacker", category: "act", displayOrder: 5 },
   "slow-action": { id: "slow-action", name: "Slow Action", cost: 6, description: "Complex non-combat activity (barricade door, bind wounds)", category: "other", displayOrder: 10 },
   done: { id: "done", name: "Done", cost: 0, description: "Take no further actions this cycle. Remaining AP banks as Fury.", category: "other", displayOrder: 99 },
 };
 
 export const CATEGORY_LABELS: Record<ActionCategory, string> = {
   move: "Move",
-  act: "Act",
+  act: "Attacks",
   other: "Other",
 };
 
