@@ -2,6 +2,7 @@ import type { CombatState, Combatant, CombatantSide, DexCategory } from "../../t
 import type { PartyPlayer } from "../renderer";
 import { PLAYER_BASE_AP, MONSTER_BASE_AP } from "../../util/constants";
 import { generateId } from "../../util/ids";
+import { getNextCopyName } from "../../util/names";
 import { saveState, getState } from "../../state/store";
 import { getPlayerCombatants, getMonsterCombatants } from "../../state/selectors";
 import { computeStartingAp } from "../../rules/ap";
@@ -85,7 +86,13 @@ function renderSetupCard(
     ? `<span class="stat stat-ap">${c.apBase} AP${c.apVariance ? " ±" : ""} ${dexLabels[c.dexCategory]}</span>`
     : "";
 
+  const copyButton =
+    isGM && c.side === "monster"
+      ? `<button class="btn-icon" data-action="copy-combatant" data-id="${c.id}" title="Copy">&#x2398;</button>`
+      : "";
+
   const extraActions = [
+    copyButton,
     c.surprised ? `<span class="badge badge-warning">Surprised</span>` : "",
     c.tokenId ? `<span class="badge badge-info">Token</span>` : "",
   ]
@@ -314,6 +321,9 @@ export function bindSetupEvents(
       case "edit-combatant":
         if (id) showEditModalHandler(state, id, isGM, playerId, partyPlayers);
         break;
+      case "copy-combatant":
+        if (id && isGM) copyCombatant(state, id);
+        break;
       case "remove-combatant":
         // Handled by global handler in renderer.ts (with confirmation)
         break;
@@ -527,6 +537,32 @@ export function saveCombatantFromModal(
     combatants: state.combatants.map((existing) => (existing.id === id ? updated : existing)),
   };
   saveState(newState);
+}
+
+function copyCombatant(state: CombatState, id: string): void {
+  const source = state.combatants.find((c) => c.id === id);
+  if (!source) return;
+
+  const existingNames = state.combatants.map((c) => c.name);
+  const newName = getNextCopyName(source.name, existingNames);
+
+  const copy: Combatant = {
+    id: generateId(),
+    name: newName,
+    side: source.side,
+    status: source.status,
+    stats: { ...source.stats, hpCurrent: source.stats.hpMax },
+    dexCategory: source.dexCategory,
+    apBase: source.apBase,
+    apVariance: source.apVariance,
+    surprised: source.surprised,
+    ownerId: source.ownerId,
+  };
+
+  saveState({
+    ...state,
+    combatants: [...state.combatants, copy],
+  });
 }
 
 function _removeCombatant(state: CombatState, id: string): void {
