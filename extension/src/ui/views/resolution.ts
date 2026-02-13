@@ -138,7 +138,7 @@ function renderResolutionRow(
 
   let rowClass = "resolution-row";
   if (isCurrent) rowClass += " current";
-  if (isResolved) rowClass += " resolved";
+  if (isResolved && !combatantIsWaiting) rowClass += " resolved";
   if (isPending) rowClass += " pending";
   if (isDone) rowClass += " resolution-done";
 
@@ -147,10 +147,17 @@ function renderResolutionRow(
     c.side === "monster" ? "GM" : partyPlayers.find((p) => p.id === c.ownerId)?.name;
   const marker = isResolved ? "&#x2713;" : isCurrent ? "&#x25B6;" : "&#x25CB;";
 
-  const waitingBadge =
-    combatantIsWaiting && !followUpDecl
-      ? ` <span class="badge badge-warning clickable" data-action="open-follow-up" data-combatant-id="${c.id}">Waiting</span>`
-      : "";
+  const isWaitAction = decl.actionId === "wait";
+  let waitingBadge = "";
+  if (isWaitAction && !followUpDecl) {
+    if (combatantIsWaiting) {
+      // Resolved wait - clickable badge to open follow-up modal
+      waitingBadge = ` <span class="badge badge-warning clickable" data-action="open-follow-up" data-combatant-id="${c.id}">Waiting</span>`;
+    } else {
+      // Pending/current wait - display-only badge
+      waitingBadge = ` <span class="badge badge-warning">Waiting</span>`;
+    }
+  }
 
   const statusContent = `
     <span class="resolution-marker">${marker}</span>
