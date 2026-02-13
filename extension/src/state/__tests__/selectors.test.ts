@@ -93,6 +93,7 @@ describe("getDeclaration", () => {
           declarations: [makeDecl({ combatantId: "c1", actionId: "attack" })],
           resolutionOrder: [],
           currentResolutionIndex: 0,
+          waitingCombatants: [],
         },
       }),
     });
@@ -146,6 +147,7 @@ describe("allDeclarationsLocked", () => {
           ],
           resolutionOrder: [],
           currentResolutionIndex: 0,
+          waitingCombatants: [],
         },
       }),
     });
@@ -165,6 +167,7 @@ describe("allDeclarationsLocked", () => {
           ],
           resolutionOrder: [],
           currentResolutionIndex: 0,
+          waitingCombatants: [],
         },
       }),
     });
@@ -182,6 +185,7 @@ describe("allDeclarationsLocked", () => {
           declarations: [makeDecl({ combatantId: "a", locked: true })],
           resolutionOrder: [],
           currentResolutionIndex: 0,
+          waitingCombatants: [],
         },
       }),
     });
@@ -198,6 +202,7 @@ describe("allDeclarationsLocked", () => {
           declarations: [makeDecl({ combatantId: "a", locked: true })],
           resolutionOrder: [],
           currentResolutionIndex: 0,
+          waitingCombatants: [],
         },
       }),
     });

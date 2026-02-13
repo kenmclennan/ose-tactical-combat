@@ -1,9 +1,16 @@
-import type { CombatState, Combatant, Declaration } from "../../types";
+import type { CombatState, Combatant, Declaration, ActionId } from "../../types";
 import { saveState } from "../../state/store";
-import { getCombatantById, getCurrentAp, anyoneCanAct } from "../../state/selectors";
-import { ACTION_LIST } from "../../rules/actions";
+import {
+  getCombatantById,
+  getCurrentAp,
+  anyoneCanAct,
+  isWaiting,
+  getFollowUpActions,
+} from "../../state/selectors";
+import { ACTION_LIST, CATEGORY_ORDER, CATEGORY_LABELS } from "../../rules/actions";
 import { deductCycleCosts, deductCycleMoveCosts } from "../../rules/resolution";
 import { renderCombatantCard, type CardOptions } from "../components/combatant-card";
+import { showModal, closeModal } from "../modal";
 
 export function renderResolutionView(
   state: CombatState,
@@ -101,9 +108,30 @@ function renderResolutionRow(
 ): string {
   const _ap = getCurrentAp(state, c.id);
   const isDone = decl.actionId === "done";
-  const actionName = isDone
-    ? "Done"
-    : (ACTION_LIST.find((a) => a.id === decl.actionId)?.name ?? decl.actionId);
+  const combatantIsWaiting = isWaiting(state, c.id);
+  // Check for follow-up declaration (second declaration for same combatant)
+  const allDecls = state.round!.currentCycle.declarations.filter((d) => d.combatantId === c.id);
+  const followUpDecl = allDecls.length > 1 ? allDecls[1] : undefined;
+
+  let actionName: string;
+  let costDisplay: string;
+  if (combatantIsWaiting && !followUpDecl) {
+    actionName = "Wait";
+    costDisplay = `<span class="action-cost-badge">1 AP</span>`;
+  } else if (followUpDecl) {
+    const followUpAction = ACTION_LIST.find((a) => a.id === followUpDecl.actionId);
+    const followUpName = followUpAction?.name ?? followUpDecl.actionId;
+    const totalCost = decl.cost + followUpDecl.cost;
+    actionName = `Wait + ${followUpName}`;
+    costDisplay = `<span class="action-cost-badge">${totalCost} AP</span>`;
+  } else if (isDone) {
+    actionName = "Done";
+    costDisplay = "";
+  } else {
+    actionName = ACTION_LIST.find((a) => a.id === decl.actionId)?.name ?? decl.actionId;
+    costDisplay = `<span class="action-cost-badge">${decl.cost} AP</span>`;
+  }
+
   const isCurrent = idx === currentIdx;
   const isResolved = idx < currentIdx;
   const isPending = idx > currentIdx;
@@ -118,10 +146,16 @@ function renderResolutionRow(
   const ownerName =
     c.side === "monster" ? "GM" : partyPlayers.find((p) => p.id === c.ownerId)?.name;
   const marker = isResolved ? "&#x2713;" : isCurrent ? "&#x25B6;" : "&#x25CB;";
+
+  const waitingBadge =
+    combatantIsWaiting && !followUpDecl
+      ? ` <span class="badge badge-warning clickable" data-action="open-follow-up" data-combatant-id="${c.id}">Waiting</span>`
+      : "";
+
   const statusContent = `
     <span class="resolution-marker">${marker}</span>
     <span class="decl-action-label ${isDone ? "done-label" : ""}">${actionName}</span>
-    ${isDone ? "" : `<span class="action-cost-badge">${decl.cost} AP</span>`}
+    ${costDisplay}${waitingBadge}
   `;
   const cardOpts: CardOptions = {
     showAp: true,
@@ -177,6 +211,14 @@ export function bindResolutionEvents(
     if (action === "force-end-round" && isGM) {
       forceEndRound(state);
     }
+    if (action === "open-follow-up") {
+      const combatantId = target.dataset.combatantId;
+      if (!combatantId) return;
+      const c = getCombatantById(state, combatantId);
+      if (!c) return;
+      const canOpen = isGM || c.ownerId === playerId;
+      if (canOpen) showFollowUpModal(state, combatantId);
+    }
   });
 }
 
@@ -187,9 +229,16 @@ function resolveNext(state: CombatState): void {
 
   // Mark current declaration as resolved
   const currentId = cycle.resolutionOrder[idx];
+  const currentDecl = cycle.declarations.find((d) => d.combatantId === currentId);
   let declarations = cycle.declarations.map((d) =>
     d.combatantId === currentId ? { ...d, resolved: true } : d,
   );
+
+  // If the resolved action is "wait", add combatant to waitingCombatants
+  let waitingCombatants = cycle.waitingCombatants;
+  if (currentDecl?.actionId === "wait" && !waitingCombatants.includes(currentId)) {
+    waitingCombatants = [...waitingCombatants, currentId];
+  }
 
   idx += 1;
 
@@ -215,6 +264,94 @@ function resolveNext(state: CombatState): void {
         ...cycle,
         declarations,
         currentResolutionIndex: idx,
+        waitingCombatants,
+      },
+    },
+  });
+}
+
+function showFollowUpModal(state: CombatState, combatantId: string): void {
+  const c = getCombatantById(state, combatantId);
+  if (!c) return;
+  const actions = getFollowUpActions(state, combatantId);
+  const name = escapeHtml(c.name);
+
+  const actionButtons = CATEGORY_ORDER.map((cat) => {
+    const group = actions.filter((a) => a.category === cat);
+    if (group.length === 0) return "";
+    return `
+      <div class="action-group-label">${CATEGORY_LABELS[cat]}</div>
+      ${group
+        .map(
+          (a) => `
+        <button
+          class="action-btn"
+          data-action="select-follow-up"
+          data-action-id="${a.id}"
+          data-cost="${a.cost}"
+          title="${a.description}"
+        >
+          <span class="action-cost">${a.cost}</span>
+          <span class="action-name">${a.name}</span>
+        </button>
+      `,
+        )
+        .join("")}
+    `;
+  }).join("");
+
+  showModal(
+    `
+    <div class="modal-overlay" data-modal-overlay="true">
+      <div class="modal">
+        <div class="modal-header">
+          <span class="modal-title">Follow-Up: ${name}</span>
+          <button class="btn-icon" data-action="close-modal">&#x2715;</button>
+        </div>
+        <div class="modal-body">
+          <div class="action-list">
+            ${actionButtons}
+          </div>
+        </div>
+      </div>
+    </div>
+  `,
+    (action, data) => {
+      if (action === "select-follow-up") {
+        const actionId = data.actionId as ActionId;
+        const cost = parseInt(data.cost || "0");
+        if (actionId) {
+          selectFollowUp(state, combatantId, actionId, cost);
+          closeModal();
+        }
+      }
+    },
+  );
+}
+
+function selectFollowUp(
+  state: CombatState,
+  combatantId: string,
+  actionId: ActionId,
+  cost: number,
+): void {
+  const cycle = state.round!.currentCycle;
+  const followUpDecl: Declaration = {
+    combatantId,
+    actionId,
+    cost,
+    locked: true,
+    resolved: true,
+  };
+
+  saveState({
+    ...state,
+    round: {
+      ...state.round!,
+      currentCycle: {
+        ...cycle,
+        declarations: [...cycle.declarations, followUpDecl],
+        waitingCombatants: cycle.waitingCombatants.filter((id) => id !== combatantId),
       },
     },
   });
@@ -247,6 +384,7 @@ function endCycle(state: CombatState): void {
           declarations: [],
           resolutionOrder: [],
           currentResolutionIndex: 0,
+          waitingCombatants: [],
         },
         completedCycles: round.completedCycles + 1,
       },

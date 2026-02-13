@@ -24,6 +24,7 @@ export interface CycleState {
   declarations: Declaration[];
   resolutionOrder: string[];
   currentResolutionIndex: number;
+  waitingCombatants: string[];
 }
 
 export interface RoundState {

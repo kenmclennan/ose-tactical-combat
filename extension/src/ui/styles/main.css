@@ -282,6 +282,15 @@ body {
   color: #88aadd;
 }
 
+.badge.clickable {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.badge.clickable:hover {
+  background: rgba(228, 168, 50, 0.4);
+}
+
 .stat {
   font-size: 11px;
   color: var(--text-secondary);

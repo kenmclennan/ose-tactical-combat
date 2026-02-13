@@ -552,6 +552,7 @@ function startCombat(state: CombatState, gmId: string): void {
         declarations: [],
         resolutionOrder: [],
         currentResolutionIndex: 0,
+        waitingCombatants: [],
       },
       completedCycles: 0,
       doneForRound: [],

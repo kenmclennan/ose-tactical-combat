@@ -353,6 +353,7 @@ function beginDeclaration(state: CombatState): void {
         declarations: [],
         resolutionOrder: [],
         currentResolutionIndex: 0,
+        waitingCombatants: [],
       },
     },
   });

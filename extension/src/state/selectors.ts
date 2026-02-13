@@ -63,3 +63,28 @@ export function getRemainingMoves(state: CombatState, combatantId: string): numb
 export function getResolutionOrder(state: CombatState): string[] {
   return state.round?.currentCycle.resolutionOrder ?? [];
 }
+
+export function isWaiting(state: CombatState, combatantId: string): boolean {
+  return state.round?.currentCycle.waitingCombatants.includes(combatantId) ?? false;
+}
+
+export function canAffordWait(state: CombatState, combatantId: string): boolean {
+  const ap = getCurrentAp(state, combatantId);
+  const remainingMoves = getRemainingMoves(state, combatantId);
+  // Need at least wait cost (1) + cheapest non-wait, non-done action
+  const followUpActions = ACTION_LIST.filter(
+    (a) => a.id !== "wait" && a.id !== "done" && a.moveCost <= remainingMoves,
+  );
+  if (followUpActions.length === 0) return false;
+  const cheapest = Math.min(...followUpActions.map((a) => a.cost));
+  return ap >= 1 + cheapest;
+}
+
+export function getFollowUpActions(state: CombatState, combatantId: string): ActionDefinition[] {
+  const ap = getCurrentAp(state, combatantId);
+  const budget = ap - 1; // subtract wait cost
+  const remainingMoves = getRemainingMoves(state, combatantId);
+  return ACTION_LIST.filter(
+    (a) => a.id !== "wait" && a.id !== "done" && a.cost <= budget && a.moveCost <= remainingMoves,
+  );
+}

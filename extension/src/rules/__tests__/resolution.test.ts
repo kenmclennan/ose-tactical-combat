@@ -31,6 +31,7 @@ describe("buildResolutionOrder", () => {
           ],
           resolutionOrder: [],
           currentResolutionIndex: 0,
+          waitingCombatants: [],
         },
       }),
     });
@@ -50,6 +51,7 @@ describe("buildResolutionOrder", () => {
           ],
           resolutionOrder: [],
           currentResolutionIndex: 0,
+          waitingCombatants: [],
         },
       }),
     });
@@ -69,6 +71,7 @@ describe("buildResolutionOrder", () => {
           ],
           resolutionOrder: [],
           currentResolutionIndex: 0,
+          waitingCombatants: [],
         },
       }),
     });

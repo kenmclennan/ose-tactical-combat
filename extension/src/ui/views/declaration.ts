@@ -7,6 +7,7 @@ import {
   allDeclarationsLocked,
   isDoneForRound,
   getRemainingMoves,
+  canAffordWait,
 } from "../../state/selectors";
 import { ACTION_LIST, CATEGORY_ORDER, CATEGORY_LABELS } from "../../rules/actions";
 import {
@@ -121,7 +122,7 @@ function renderDeclarationRow(
       <div class="decl-row decl-active ${!decl ? "decl-undeclared" : ""}" data-combatant-id="${c.id}">
         ${renderCombatantCard(c, state, cardOpts)}
         <div class="action-picker">
-          ${renderActionPicker(c.id, ap, getRemainingMoves(state, c.id), decl)}
+          ${renderActionPicker(state, c.id, ap, getRemainingMoves(state, c.id), decl)}
         </div>
         <div class="decl-controls">
           <button class="btn btn-sm btn-done" data-action="declare-done" data-combatant-id="${c.id}">
@@ -170,6 +171,7 @@ function renderDeclarationRow(
 }
 
 function renderActionPicker(
+  state: CombatState,
   combatantId: string,
   ap: number,
   remainingMoves: number,
@@ -179,7 +181,10 @@ function renderActionPicker(
   const actions = ACTION_LIST.filter((a) => a.id !== "done");
 
   const renderButton = (a: (typeof actions)[number]) => {
-    const affordable = a.cost <= ap && a.moveCost <= remainingMoves;
+    const affordable =
+      a.cost <= ap &&
+      a.moveCost <= remainingMoves &&
+      (a.id !== "wait" || canAffordWait(state, combatantId));
     const selected = currentDecl?.actionId === a.id;
     return `
       <button

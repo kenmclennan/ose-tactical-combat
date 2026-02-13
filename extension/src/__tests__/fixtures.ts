@@ -26,6 +26,7 @@ export function makeRound(overrides: Partial<RoundState> = {}): RoundState {
       declarations: [],
       resolutionOrder: [],
       currentResolutionIndex: 0,
+      waitingCombatants: [],
     },
     completedCycles: 0,
     doneForRound: [],
