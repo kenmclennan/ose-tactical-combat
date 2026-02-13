@@ -150,11 +150,11 @@ function renderResolutionRow(
   const isWaitAction = decl.actionId === "wait";
   let waitingBadge = "";
   if (isWaitAction && !followUpDecl) {
-    if (combatantIsWaiting) {
-      // Resolved wait - clickable badge to open follow-up modal
+    if (combatantIsWaiting || isCurrent) {
+      // Resolved or current wait - clickable badge to open follow-up modal
       waitingBadge = ` <span class="badge badge-warning clickable" data-action="open-follow-up" data-combatant-id="${c.id}">Waiting</span>`;
     } else {
-      // Pending/current wait - display-only badge
+      // Pending wait - display-only badge
       waitingBadge = ` <span class="badge badge-warning">Waiting</span>`;
     }
   }
