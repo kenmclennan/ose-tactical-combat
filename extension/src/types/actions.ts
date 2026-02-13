@@ -30,4 +30,5 @@ export interface ActionDefinition {
   cost: number;
   description: string;
   category: ActionCategory;
+  displayOrder: number;
 }
