@@ -46,7 +46,10 @@ export function renderRoundEndView(
       </div>
       ${isGM ? `
         <div class="round-end-actions">
-          <button class="btn btn-primary btn-full" data-action="next-round">Next Round</button>
+          <div class="round-actions-row">
+            <button class="btn btn-secondary" data-action="end-combat">End Combat</button>
+            <button class="btn btn-primary" data-action="next-round">Next Round</button>
+          </div>
         </div>
       ` : `
         <div class="hint">Waiting for GM...</div>

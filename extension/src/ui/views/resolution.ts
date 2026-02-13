@@ -31,16 +31,16 @@ export function renderResolutionView(
       ${isGM ? `
         <div class="resolution-actions">
           ${!allResolved ? `
-            <button class="btn btn-primary btn-full" data-action="resolve-next">
-              Next: ${getNextLabel(state)}
-            </button>
+            <div class="round-actions-row">
+              <button class="btn btn-secondary" data-action="end-combat">End Combat</button>
+              <button class="btn btn-primary" data-action="resolve-next">Next: ${getNextLabel(state)}</button>
+            </div>
           ` : `
-            <button class="btn btn-primary btn-full" data-action="end-cycle">
-              End Cycle
-            </button>
-            <button class="btn btn-secondary btn-full" data-action="force-end-round">
-              End Round
-            </button>
+            <div class="round-actions-row">
+              <button class="btn btn-secondary" data-action="end-combat">End Combat</button>
+              <button class="btn btn-secondary" data-action="force-end-round">End Round</button>
+              <button class="btn btn-primary" data-action="end-cycle">End Cycle</button>
+            </div>
           `}
         </div>
       ` : `
