@@ -41,7 +41,7 @@ export class BuiltInRoller implements DiceRoller {
   }
 }
 
-let defaultRoller: DiceRoller = new BuiltInRoller();
+const defaultRoller: DiceRoller = new BuiltInRoller();
 
 export function getRoller(): DiceRoller {
   return defaultRoller;

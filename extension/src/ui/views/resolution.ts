@@ -1,14 +1,8 @@
 import type { CombatState, Combatant, Declaration } from "../../types";
 import { saveState } from "../../state/store";
-import {
-  getCombatantById,
-  getCurrentAp,
-  getActiveCombatants,
-  anyoneCanAct,
-} from "../../state/selectors";
+import { getCombatantById, getCurrentAp, anyoneCanAct } from "../../state/selectors";
 import { ACTION_LIST } from "../../rules/actions";
 import { deductCycleCosts } from "../../rules/resolution";
-import { calculateFuryBanked } from "../../rules/fury";
 import { renderCombatantCard, type CardOptions } from "../components/combatant-card";
 
 export function renderResolutionView(
@@ -28,31 +22,43 @@ export function renderResolutionView(
         ${renderGroupedRows(order, cycle, currentIdx, state, playerId, isGM, partyPlayers)}
         ${order.length === 0 ? `<div class="empty-list">No declarations to resolve</div>` : ""}
       </div>
-      ${isGM ? `
+      ${
+        isGM
+          ? `
         <div class="resolution-actions">
-          ${!allResolved ? `
+          ${
+            !allResolved
+              ? `
             <div class="round-actions-row">
               <button class="btn btn-secondary" data-action="end-combat">End Combat</button>
               <button class="btn btn-primary" data-action="resolve-next">Next: ${getNextLabel(state)}</button>
             </div>
-          ` : `
+          `
+              : `
             <div class="round-actions-row">
               <button class="btn btn-secondary" data-action="end-combat">End Combat</button>
               <button class="btn btn-secondary" data-action="force-end-round">End Round</button>
               <button class="btn btn-primary" data-action="end-cycle">End Cycle</button>
             </div>
-          `}
+          `
+          }
         </div>
-      ` : `
+      `
+          : `
         <div class="hint">${allResolved ? "Waiting for GM to end cycle..." : "Resolving actions..."}</div>
-      `}
+      `
+      }
     </div>
   `;
 }
 
 function renderGroupedRows(
   order: string[],
-  cycle: CombatState["round"] extends infer R ? R extends { currentCycle: infer C } ? C : never : never,
+  cycle: CombatState["round"] extends infer R
+    ? R extends { currentCycle: infer C }
+      ? C
+      : never
+    : never,
   currentIdx: number,
   state: CombatState,
   playerId: string,
@@ -93,9 +99,11 @@ function renderResolutionRow(
   isGM: boolean,
   partyPlayers: { id: string; name: string }[],
 ): string {
-  const ap = getCurrentAp(state, c.id);
+  const _ap = getCurrentAp(state, c.id);
   const isDone = decl.actionId === "done";
-  const actionName = isDone ? "Done" : ACTION_LIST.find((a) => a.id === decl.actionId)?.name ?? decl.actionId;
+  const actionName = isDone
+    ? "Done"
+    : (ACTION_LIST.find((a) => a.id === decl.actionId)?.name ?? decl.actionId);
   const isCurrent = idx === currentIdx;
   const isResolved = idx < currentIdx;
   const isPending = idx > currentIdx;
@@ -107,7 +115,8 @@ function renderResolutionRow(
   if (isDone) rowClass += " resolution-done";
 
   const isOwner = c.ownerId === playerId;
-  const ownerName = c.side === "monster" ? "GM" : partyPlayers.find((p) => p.id === c.ownerId)?.name;
+  const ownerName =
+    c.side === "monster" ? "GM" : partyPlayers.find((p) => p.id === c.ownerId)?.name;
   const marker = isResolved ? "&#x2713;" : isCurrent ? "&#x25B6;" : "&#x25CB;";
   const statusContent = `
     <span class="resolution-marker">${marker}</span>

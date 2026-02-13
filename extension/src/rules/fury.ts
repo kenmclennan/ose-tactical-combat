@@ -16,9 +16,7 @@ export const FURY_SPEND_OPTIONS: FurySpendOption[] = [
 ];
 
 export function calculateFuryBanked(state: CombatState): number {
-  const players = getPlayerCombatants(state).filter(
-    (c) => c.status === "active",
-  );
+  const players = getPlayerCombatants(state).filter((c) => c.status === "active");
   let total = 0;
   for (const p of players) {
     const leftover = getCurrentAp(state, p.id);
@@ -41,10 +39,7 @@ export function canSpendFury(
   return currentFury >= option.cost;
 }
 
-export function appendFuryLog(
-  log: FuryLogEntry[],
-  entry: FuryLogEntry,
-): FuryLogEntry[] {
+export function appendFuryLog(log: FuryLogEntry[], entry: FuryLogEntry): FuryLogEntry[] {
   const updated = [...log, entry];
   if (updated.length > FURY_LOG_MAX) {
     return updated.slice(updated.length - FURY_LOG_MAX);

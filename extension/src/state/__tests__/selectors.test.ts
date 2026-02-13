@@ -135,10 +135,7 @@ describe("isDoneForRound", () => {
 describe("allDeclarationsLocked", () => {
   it("returns true when all active combatants have locked declarations", () => {
     const state = makeCombatState({
-      combatants: [
-        makeCombatant({ id: "a" }),
-        makeCombatant({ id: "b" }),
-      ],
+      combatants: [makeCombatant({ id: "a" }), makeCombatant({ id: "b" })],
       round: makeRound({
         apCurrent: { a: 5, b: 5 },
         currentCycle: {
@@ -157,10 +154,7 @@ describe("allDeclarationsLocked", () => {
 
   it("returns false when a combatant has unlocked declaration", () => {
     const state = makeCombatState({
-      combatants: [
-        makeCombatant({ id: "a" }),
-        makeCombatant({ id: "b" }),
-      ],
+      combatants: [makeCombatant({ id: "a" }), makeCombatant({ id: "b" })],
       round: makeRound({
         apCurrent: { a: 5, b: 5 },
         currentCycle: {
@@ -179,18 +173,13 @@ describe("allDeclarationsLocked", () => {
 
   it("treats done-for-round combatants as locked", () => {
     const state = makeCombatState({
-      combatants: [
-        makeCombatant({ id: "a" }),
-        makeCombatant({ id: "b" }),
-      ],
+      combatants: [makeCombatant({ id: "a" }), makeCombatant({ id: "b" })],
       round: makeRound({
         apCurrent: { a: 5, b: 5 },
         doneForRound: ["b"],
         currentCycle: {
           cycleNumber: 1,
-          declarations: [
-            makeDecl({ combatantId: "a", locked: true }),
-          ],
+          declarations: [makeDecl({ combatantId: "a", locked: true })],
           resolutionOrder: [],
           currentResolutionIndex: 0,
         },
@@ -201,17 +190,12 @@ describe("allDeclarationsLocked", () => {
 
   it("treats combatants with 0 AP as locked", () => {
     const state = makeCombatState({
-      combatants: [
-        makeCombatant({ id: "a" }),
-        makeCombatant({ id: "b" }),
-      ],
+      combatants: [makeCombatant({ id: "a" }), makeCombatant({ id: "b" })],
       round: makeRound({
         apCurrent: { a: 5, b: 0 },
         currentCycle: {
           cycleNumber: 1,
-          declarations: [
-            makeDecl({ combatantId: "a", locked: true }),
-          ],
+          declarations: [makeDecl({ combatantId: "a", locked: true })],
           resolutionOrder: [],
           currentResolutionIndex: 0,
         },
@@ -250,10 +234,7 @@ describe("anyoneCanAct", () => {
 
   it("returns false when all have 0 AP", () => {
     const state = makeCombatState({
-      combatants: [
-        makeCombatant({ id: "a" }),
-        makeCombatant({ id: "b" }),
-      ],
+      combatants: [makeCombatant({ id: "a" }), makeCombatant({ id: "b" })],
       round: makeRound({ apCurrent: { a: 0, b: 0 } }),
     });
     expect(anyoneCanAct(state)).toBe(false);
@@ -261,9 +242,7 @@ describe("anyoneCanAct", () => {
 
   it("ignores killed combatants", () => {
     const state = makeCombatState({
-      combatants: [
-        makeCombatant({ id: "a", status: "killed" }),
-      ],
+      combatants: [makeCombatant({ id: "a", status: "killed" })],
       round: makeRound({ apCurrent: { a: 5 } }),
     });
     expect(anyoneCanAct(state)).toBe(false);

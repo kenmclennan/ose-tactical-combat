@@ -1,5 +1,5 @@
 import type { CombatState, Declaration } from "../types";
-import { getActiveCombatants, getCurrentAp } from "../state/selectors";
+import { getCurrentAp } from "../state/selectors";
 
 /**
  * Build resolution order: highest current AP first.
@@ -32,10 +32,7 @@ export function deductCycleCosts(
   const updated = { ...apCurrent };
   for (const decl of declarations) {
     if (decl.resolved) {
-      updated[decl.combatantId] = Math.max(
-        0,
-        (updated[decl.combatantId] ?? 0) - decl.cost,
-      );
+      updated[decl.combatantId] = Math.max(0, (updated[decl.combatantId] ?? 0) - decl.cost);
     }
   }
   return updated;

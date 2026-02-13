@@ -1,14 +1,10 @@
 import type { CombatState } from "../../types";
 import { saveState } from "../../state/store";
-import { getActiveCombatants, getPlayerCombatants, getCurrentAp } from "../../state/selectors";
+import { getPlayerCombatants, getCurrentAp } from "../../state/selectors";
 import { calculateFuryBanked } from "../../rules/fury";
 import { MAX_FURY_PER_PLAYER_PER_ROUND } from "../../util/constants";
 
-export function renderRoundEndView(
-  state: CombatState,
-  _playerId: string,
-  isGM: boolean,
-): string {
+export function renderRoundEndView(state: CombatState, _playerId: string, isGM: boolean): string {
   const round = state.round!;
   const furyBanked = calculateFuryBanked(state);
   const players = getPlayerCombatants(state).filter((c) => c.status === "active");
@@ -32,28 +28,34 @@ export function renderRoundEndView(
       </div>
       <div class="leftover-ap">
         <div class="section-title">Leftover AP</div>
-        ${players.map((c) => {
-          const ap = getCurrentAp(state, c.id);
-          const fury = Math.min(ap, MAX_FURY_PER_PLAYER_PER_ROUND);
-          const capped = ap > MAX_FURY_PER_PLAYER_PER_ROUND;
-          return `
+        ${players
+          .map((c) => {
+            const ap = getCurrentAp(state, c.id);
+            const fury = Math.min(ap, MAX_FURY_PER_PLAYER_PER_ROUND);
+            const capped = ap > MAX_FURY_PER_PLAYER_PER_ROUND;
+            return `
             <div class="leftover-row">
               <span>${escapeHtml(c.name)}</span>
-              <span class="stat">${ap} AP = ${fury} Fury${capped ? ' (capped)' : ''}</span>
+              <span class="stat">${ap} AP = ${fury} Fury${capped ? " (capped)" : ""}</span>
             </div>
           `;
-        }).join("")}
+          })
+          .join("")}
       </div>
-      ${isGM ? `
+      ${
+        isGM
+          ? `
         <div class="round-end-actions">
           <div class="round-actions-row">
             <button class="btn btn-secondary" data-action="end-combat">End Combat</button>
             <button class="btn btn-primary" data-action="next-round">Next Round</button>
           </div>
         </div>
-      ` : `
+      `
+          : `
         <div class="hint">Waiting for GM...</div>
-      `}
+      `
+      }
     </div>
   `;
 }

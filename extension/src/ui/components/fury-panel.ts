@@ -11,7 +11,8 @@ export function showFuryModal(state: CombatState, playerId: string, isGM: boolea
     <div class="fury-modal-total">${fury}</div>
     <div class="fury-modal-label">Fury Points</div>
     <div class="fury-spend-buttons">
-      ${FURY_SPEND_OPTIONS.map((opt) => `
+      ${FURY_SPEND_OPTIONS.map(
+        (opt) => `
         <button
           class="btn btn-sm fury-spend-btn"
           data-action="modal-spend-fury"
@@ -21,7 +22,8 @@ export function showFuryModal(state: CombatState, playerId: string, isGM: boolea
         >
           ${opt.name} (${opt.cost})
         </button>
-      `).join("")}
+      `,
+      ).join("")}
     </div>
   `;
 
@@ -34,7 +36,8 @@ export function showFuryModal(state: CombatState, playerId: string, isGM: boolea
     </div>
   `;
 
-  showModal(`
+  showModal(
+    `
     <div class="modal-overlay" data-modal-overlay="true">
       <div class="modal fury-modal">
         <div class="modal-header">
@@ -46,63 +49,70 @@ export function showFuryModal(state: CombatState, playerId: string, isGM: boolea
         </div>
       </div>
     </div>
-  `, (action, data) => {
-    if (action === "modal-spend-fury") {
-      const spendType = data.spendType as FurySpendType;
-      const cost = parseInt(data.cost || "0");
-      if (!canSpendFury(state.fury.current, spendType)) return;
+  `,
+    (action, data) => {
+      if (action === "modal-spend-fury") {
+        const spendType = data.spendType as FurySpendType;
+        const cost = parseInt(data.cost || "0");
+        if (!canSpendFury(state.fury.current, spendType)) return;
 
-      const roundNum = state.round?.roundNumber ?? 0;
-      const newLog = appendFuryLog(state.fury.log, {
-        type: "spend",
-        amount: cost,
-        spendType,
-        round: roundNum,
-      });
+        const roundNum = state.round?.roundNumber ?? 0;
+        const newLog = appendFuryLog(state.fury.log, {
+          type: "spend",
+          amount: cost,
+          spendType,
+          round: roundNum,
+        });
 
-      const newState: CombatState = {
-        ...state,
-        fury: { current: state.fury.current - cost, log: newLog },
-      };
+        const newState: CombatState = {
+          ...state,
+          fury: { current: state.fury.current - cost, log: newLog },
+        };
 
-      // For +1 AP, find the player's combatant and boost their AP
-      if (spendType === "ap-boost") {
-        const pc = state.combatants.find((c) => c.ownerId === playerId && c.side === "player" && c.status === "active");
-        if (pc && newState.round) {
-          const currentAp = getCurrentAp(state, pc.id);
-          newState.round = {
-            ...newState.round,
-            apCurrent: { ...newState.round.apCurrent, [pc.id]: currentAp + 1 },
-          };
+        // For +1 AP, find the player's combatant and boost their AP
+        if (spendType === "ap-boost") {
+          const pc = state.combatants.find(
+            (c) => c.ownerId === playerId && c.side === "player" && c.status === "active",
+          );
+          if (pc && newState.round) {
+            const currentAp = getCurrentAp(state, pc.id);
+            newState.round = {
+              ...newState.round,
+              apCurrent: { ...newState.round.apCurrent, [pc.id]: currentAp + 1 },
+            };
+          }
         }
+
+        saveState(newState);
+        closeModal();
       }
 
-      saveState(newState);
-      closeModal();
-    }
+      if (action === "modal-set-fury" && isGM) {
+        const input = document.querySelector("#fury-set-amount") as HTMLInputElement | null;
+        if (!input) return;
+        const val = parseInt(input.value);
+        if (isNaN(val) || val < 0) return;
 
-    if (action === "modal-set-fury" && isGM) {
-      const input = document.querySelector("#fury-set-amount") as HTMLInputElement | null;
-      if (!input) return;
-      const val = parseInt(input.value);
-      if (isNaN(val) || val < 0) return;
+        const diff = val - state.fury.current;
+        if (diff === 0) {
+          closeModal();
+          return;
+        }
 
-      const diff = val - state.fury.current;
-      if (diff === 0) { closeModal(); return; }
+        const roundNum = state.round?.roundNumber ?? 0;
+        const newLog = appendFuryLog(state.fury.log, {
+          type: diff > 0 ? "bank" : "spend",
+          amount: Math.abs(diff),
+          ...(diff < 0 ? { spendType: "custom" as FurySpendType } : {}),
+          round: roundNum,
+        });
 
-      const roundNum = state.round?.roundNumber ?? 0;
-      const newLog = appendFuryLog(state.fury.log, {
-        type: diff > 0 ? "bank" : "spend",
-        amount: Math.abs(diff),
-        ...(diff < 0 ? { spendType: "custom" as FurySpendType } : {}),
-        round: roundNum,
-      });
-
-      saveState({
-        ...state,
-        fury: { current: val, log: newLog },
-      });
-      closeModal();
-    }
-  });
+        saveState({
+          ...state,
+          fury: { current: val, log: newLog },
+        });
+        closeModal();
+      }
+    },
+  );
 }

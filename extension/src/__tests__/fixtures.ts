@@ -1,10 +1,4 @@
-import type {
-  Combatant,
-  CombatState,
-  RoundState,
-  CombatPhase,
-  Declaration,
-} from "../types";
+import type { Combatant, CombatState, RoundState, CombatPhase, Declaration } from "../types";
 
 export function makeCombatant(overrides: Partial<Combatant> = {}): Combatant {
   return {
@@ -38,9 +32,7 @@ export function makeRound(overrides: Partial<RoundState> = {}): RoundState {
   };
 }
 
-export function makeCombatState(
-  overrides: Partial<CombatState> = {},
-): CombatState {
+export function makeCombatState(overrides: Partial<CombatState> = {}): CombatState {
   return {
     version: 1,
     phase: "setup" as CombatPhase,
@@ -52,9 +44,7 @@ export function makeCombatState(
   };
 }
 
-export function makeDeclaration(
-  overrides: Partial<Declaration> = {},
-): Declaration {
+export function makeDeclaration(overrides: Partial<Declaration> = {}): Declaration {
   return {
     combatantId: "c1",
     actionId: "attack",

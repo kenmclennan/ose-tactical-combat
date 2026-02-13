@@ -17,7 +17,8 @@ export function renderRoundStartView(
 
   // Auto-assign AP for non-variance combatants
   const needsAutoAssign = active.filter(
-    (c) => c.status === "active" && !c.surprised && !c.apVariance && round.apRolls[c.id] === undefined,
+    (c) =>
+      c.status === "active" && !c.surprised && !c.apVariance && round.apRolls[c.id] === undefined,
   );
   if (needsAutoAssign.length > 0) {
     const apRolls = { ...round.apRolls };
@@ -34,7 +35,9 @@ export function renderRoundStartView(
 
   const players = active.filter((c) => c.side === "player");
   const monsters = active.filter((c) => c.side === "monster");
-  const unrolledMonsters = monsters.filter((c) => round.apRolls[c.id] === undefined && c.status === "active");
+  const unrolledMonsters = monsters.filter(
+    (c) => round.apRolls[c.id] === undefined && c.status === "active",
+  );
 
   const isRound1 = round.roundNumber === 1;
   const playersSurprised = players.length > 0 && players.every((c) => c.surprised);
@@ -61,27 +64,38 @@ export function renderRoundStartView(
         ${monsters.map((c) => renderApRow(c, state, playerId, isGM, partyPlayers)).join("")}
       </div>
 
-      ${isGM ? `
+      ${
+        isGM
+          ? `
         <div class="round-actions-row">
           <button class="btn btn-secondary" data-action="end-combat">End Combat</button>
           <button class="btn btn-primary" data-action="begin-declaration" ${allRolled ? "" : "disabled"}>Begin Declaration</button>
         </div>
         ${!allRolled ? `<div class="hint">All combatants need AP assigned</div>` : ""}
-      ` : `
+      `
+          : `
         <div class="hint">${allRolled ? "Waiting for GM to begin declaration..." : "Waiting for AP rolls..."}</div>
-      `}
+      `
+      }
     </div>
   `;
 }
 
-function renderApRow(c: Combatant, state: CombatState, playerId: string, isGM: boolean, partyPlayers: { id: string; name: string }[]): string {
+function renderApRow(
+  c: Combatant,
+  state: CombatState,
+  playerId: string,
+  isGM: boolean,
+  partyPlayers: { id: string; name: string }[],
+): string {
   const round = state.round!;
   const roll = round.apRolls[c.id];
-  const ap = round.apCurrent[c.id];
+  const _ap = round.apCurrent[c.id];
   const hasRoll = roll !== undefined;
   const isOwner = c.ownerId === playerId;
   const canRoll = isGM || (isOwner && c.side === "player");
-  const ownerName = c.side === "monster" ? "GM" : partyPlayers.find((p) => p.id === c.ownerId)?.name;
+  const ownerName =
+    c.side === "monster" ? "GM" : partyPlayers.find((p) => p.id === c.ownerId)?.name;
 
   const cardOpts: CardOptions = {
     showAp: false,
@@ -134,12 +148,14 @@ function renderApRow(c: Combatant, state: CombatState, playerId: string, isGM: b
     <div class="decl-row">
       ${renderCombatantCard(c, state, {
         ...cardOpts,
-        extraStats: canRoll ? `
+        extraStats: canRoll
+          ? `
           <div class="ap-roll-controls">
             <button class="btn btn-sm btn-primary" data-action="roll-single-ap" data-id="${c.id}">Roll</button>
             <button class="btn btn-sm btn-secondary" data-action="set-manual-ap" data-id="${c.id}">Set</button>
           </div>
-        ` : `<span class="ap-value pending">--</span>`,
+        `
+          : `<span class="ap-value pending">--</span>`,
       })}
     </div>
   `;
@@ -177,7 +193,12 @@ export function bindRoundStartEvents(
   });
 }
 
-function rollSingleAp(state: CombatState, combatantId: string, playerId: string, isGM: boolean): void {
+function rollSingleAp(
+  state: CombatState,
+  combatantId: string,
+  playerId: string,
+  isGM: boolean,
+): void {
   const c = state.combatants.find((c) => c.id === combatantId);
   if (!c || c.status !== "active") return;
 
@@ -200,14 +221,20 @@ function rollSingleAp(state: CombatState, combatantId: string, playerId: string,
   });
 }
 
-function showSetApModal(state: CombatState, combatantId: string, playerId: string, isGM: boolean): void {
+function showSetApModal(
+  state: CombatState,
+  combatantId: string,
+  playerId: string,
+  isGM: boolean,
+): void {
   const c = state.combatants.find((c) => c.id === combatantId);
   if (!c || c.status !== "active") return;
 
   const canSet = isGM || (c.ownerId === playerId && c.side === "player");
   if (!canSet) return;
 
-  showModal(`
+  showModal(
+    `
     <div class="modal-overlay" data-modal-overlay="true">
       <div class="modal">
         <div class="modal-header">
@@ -224,27 +251,29 @@ function showSetApModal(state: CombatState, combatantId: string, playerId: strin
         </div>
       </div>
     </div>
-  `, (action, data) => {
-    if (action === "save-ap") {
-      const modal = document.querySelector(".modal-overlay");
-      const input = modal?.querySelector('[data-field="ap"]') as HTMLInputElement | null;
-      if (!input) return;
+  `,
+    (action, _data) => {
+      if (action === "save-ap") {
+        const modal = document.querySelector(".modal-overlay");
+        const input = modal?.querySelector('[data-field="ap"]') as HTMLInputElement | null;
+        if (!input) return;
 
-      const val = parseInt(input.value);
-      if (isNaN(val) || val < 1) return;
+        const val = parseInt(input.value);
+        if (isNaN(val) || val < 1) return;
 
-      const round = state.round!;
-      saveState({
-        ...state,
-        round: {
-          ...round,
-          apRolls: { ...round.apRolls, [combatantId]: 0 },
-          apCurrent: { ...round.apCurrent, [combatantId]: val },
-        },
-      });
-      closeModal();
-    }
-  });
+        const round = state.round!;
+        saveState({
+          ...state,
+          round: {
+            ...round,
+            apRolls: { ...round.apRolls, [combatantId]: 0 },
+            apCurrent: { ...round.apCurrent, [combatantId]: val },
+          },
+        });
+        closeModal();
+      }
+    },
+  );
 }
 
 function rollMonsterAp(state: CombatState): void {
@@ -295,7 +324,13 @@ function toggleSideSurprise(state: CombatState, side: CombatantSide): void {
         delete apRolls[c.id];
         delete apCurrent[c.id];
       } else if (apRolls[c.id] !== undefined) {
-        apCurrent[c.id] = computeStartingAp(c.apBase, apRolls[c.id], c.dexCategory, c.apVariance, false);
+        apCurrent[c.id] = computeStartingAp(
+          c.apBase,
+          apRolls[c.id],
+          c.dexCategory,
+          c.apVariance,
+          false,
+        );
       }
     }
   }

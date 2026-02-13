@@ -10,10 +10,7 @@ const VALID_TRANSITIONS: Record<CombatPhase, CombatPhase[]> = {
   "combat-end": ["setup"],
 };
 
-export function canTransition(
-  from: CombatPhase,
-  to: CombatPhase,
-): boolean {
+export function canTransition(from: CombatPhase, to: CombatPhase): boolean {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
 }
 

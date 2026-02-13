@@ -17,8 +17,8 @@ export function renderSetupView(
 ): string {
   const players = getPlayerCombatants(state);
   const monsters = getMonsterCombatants(state);
-  const canStart = players.some((c) => c.status === "active") &&
-    monsters.some((c) => c.status === "active");
+  const canStart =
+    players.some((c) => c.status === "active") && monsters.some((c) => c.status === "active");
 
   return `
     <div class="setup-view">
@@ -44,7 +44,9 @@ export function renderSetupView(
         </div>
       </div>
 
-      ${isGM ? `
+      ${
+        isGM
+          ? `
         <div class="setup-actions">
           <div class="setup-buttons">
             <button class="btn btn-secondary" data-action="cancel-setup">Cancel</button>
@@ -54,7 +56,9 @@ export function renderSetupView(
           </div>
           ${!canStart ? `<div class="hint">Need at least 1 player and 1 monster</div>` : ""}
         </div>
-      ` : ""}
+      `
+          : ""
+      }
     </div>
   `;
 }
@@ -68,7 +72,8 @@ function renderSetupCard(
 ): string {
   const isOwner = c.ownerId === playerId;
   const showStats = isGM || c.side === "player";
-  const ownerName = c.side === "monster" ? "GM" : partyPlayers.find((p) => p.id === c.ownerId)?.name;
+  const ownerName =
+    c.side === "monster" ? "GM" : partyPlayers.find((p) => p.id === c.ownerId)?.name;
 
   const dexLabels: Record<DexCategory, string> = {
     penalty: "DEX-",
@@ -83,7 +88,9 @@ function renderSetupCard(
   const extraActions = [
     c.surprised ? `<span class="badge badge-warning">Surprised</span>` : "",
     c.tokenId ? `<span class="badge badge-info">Token</span>` : "",
-  ].filter(Boolean).join("");
+  ]
+    .filter(Boolean)
+    .join("");
 
   const cardOpts: CardOptions = {
     showAp: false,
@@ -106,13 +113,20 @@ function renderSetupCard(
 }
 
 function escapeHtml(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function renderOwnerDropdown(partyPlayers: PartyPlayer[], currentOwnerId?: string): string {
-  const options = partyPlayers.map((p) =>
-    `<option value="${escapeHtml(p.id)}" ${p.id === currentOwnerId ? "selected" : ""}>${escapeHtml(p.name)}</option>`
-  ).join("");
+  const options = partyPlayers
+    .map(
+      (p) =>
+        `<option value="${escapeHtml(p.id)}" ${p.id === currentOwnerId ? "selected" : ""}>${escapeHtml(p.name)}</option>`,
+    )
+    .join("");
 
   return `
     <div class="form-row">
@@ -126,7 +140,12 @@ function renderOwnerDropdown(partyPlayers: PartyPlayer[], currentOwnerId?: strin
 
 // --- Edit modal ---
 
-export function renderEditModal(c: Combatant, isGM: boolean, partyPlayers: PartyPlayer[] = [], playerId?: string): string {
+export function renderEditModal(
+  c: Combatant,
+  isGM: boolean,
+  partyPlayers: PartyPlayer[] = [],
+  playerId?: string,
+): string {
   const showOwnerDropdown = isGM && c.side === "player";
   const isOwner = playerId ? c.ownerId === playerId : false;
   const canEditName = isGM || isOwner;
@@ -172,7 +191,9 @@ export function renderEditModal(c: Combatant, isGM: boolean, partyPlayers: Party
               </select>
             </div>
           </div>
-          ${isGM ? `
+          ${
+            isGM
+              ? `
             <div class="form-row-group">
               <div class="form-row">
                 <label>Base AP</label>
@@ -185,7 +206,9 @@ export function renderEditModal(c: Combatant, isGM: boolean, partyPlayers: Party
                 </label>
               </div>
             </div>
-          ` : ""}
+          `
+              : ""
+          }
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" data-action="close-modal">Cancel</button>
@@ -198,7 +221,11 @@ export function renderEditModal(c: Combatant, isGM: boolean, partyPlayers: Party
 
 // --- Add modal ---
 
-export function renderAddModal(side: CombatantSide, isGM: boolean, partyPlayers: PartyPlayer[] = []): string {
+export function renderAddModal(
+  side: CombatantSide,
+  isGM: boolean,
+  partyPlayers: PartyPlayer[] = [],
+): string {
   const isMonster = side === "monster";
   const defaultAp = isMonster ? MONSTER_BASE_AP : PLAYER_BASE_AP;
   const defaultName = isMonster ? "Monster" : "Character";
@@ -297,8 +324,15 @@ export function bindSetupEvents(
   });
 }
 
-export function showAddModalHandler(state: CombatState, side: CombatantSide, playerId: string, isGM: boolean, partyPlayers: PartyPlayer[], midCombat: boolean = false): void {
-  showModal(renderAddModal(side, isGM, partyPlayers), (action, data) => {
+export function showAddModalHandler(
+  state: CombatState,
+  side: CombatantSide,
+  playerId: string,
+  isGM: boolean,
+  partyPlayers: PartyPlayer[],
+  midCombat: boolean = false,
+): void {
+  showModal(renderAddModal(side, isGM, partyPlayers), (action, _data) => {
     if (action === "create-combatant") {
       const combatantId = createCombatantFromModal(state, side, playerId);
       closeModal();
@@ -318,7 +352,8 @@ function showApAssignModal(state: CombatState, combatantId: string): void {
   if (!c) return;
   const name = c.name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-  showModal(`
+  showModal(
+    `
     <div class="modal-overlay" data-modal-overlay="true">
       <div class="modal">
         <div class="modal-header">
@@ -336,48 +371,62 @@ function showApAssignModal(state: CombatState, combatantId: string): void {
         </div>
       </div>
     </div>
-  `, (action) => {
-    const freshState = getState();
-    if (!freshState?.round) return;
-    const combatant = freshState.combatants.find((c) => c.id === combatantId);
-    if (!combatant) return;
+  `,
+    (action) => {
+      const freshState = getState();
+      if (!freshState?.round) return;
+      const combatant = freshState.combatants.find((c) => c.id === combatantId);
+      if (!combatant) return;
 
-    if (action === "roll-new-ap") {
-      const roll = rollD6();
-      const ap = computeStartingAp(combatant.apBase, roll, combatant.dexCategory, combatant.apVariance, combatant.surprised);
-      saveState({
-        ...freshState,
-        round: {
-          ...freshState.round!,
-          apRolls: { ...freshState.round!.apRolls, [combatantId]: roll },
-          apCurrent: { ...freshState.round!.apCurrent, [combatantId]: ap },
-        },
-      });
-      closeModal();
-    }
+      if (action === "roll-new-ap") {
+        const roll = rollD6();
+        const ap = computeStartingAp(
+          combatant.apBase,
+          roll,
+          combatant.dexCategory,
+          combatant.apVariance,
+          combatant.surprised,
+        );
+        saveState({
+          ...freshState,
+          round: {
+            ...freshState.round!,
+            apRolls: { ...freshState.round!.apRolls, [combatantId]: roll },
+            apCurrent: { ...freshState.round!.apCurrent, [combatantId]: ap },
+          },
+        });
+        closeModal();
+      }
 
-    if (action === "set-new-ap") {
-      const input = document.querySelector("#new-combatant-ap") as HTMLInputElement | null;
-      if (!input) return;
-      const val = parseInt(input.value);
-      if (isNaN(val) || val < 1) return;
-      saveState({
-        ...freshState,
-        round: {
-          ...freshState.round!,
-          apRolls: { ...freshState.round!.apRolls, [combatantId]: 0 },
-          apCurrent: { ...freshState.round!.apCurrent, [combatantId]: val },
-        },
-      });
-      closeModal();
-    }
-  });
+      if (action === "set-new-ap") {
+        const input = document.querySelector("#new-combatant-ap") as HTMLInputElement | null;
+        if (!input) return;
+        const val = parseInt(input.value);
+        if (isNaN(val) || val < 1) return;
+        saveState({
+          ...freshState,
+          round: {
+            ...freshState.round!,
+            apRolls: { ...freshState.round!.apRolls, [combatantId]: 0 },
+            apCurrent: { ...freshState.round!.apCurrent, [combatantId]: val },
+          },
+        });
+        closeModal();
+      }
+    },
+  );
 }
 
-export function showEditModalHandler(state: CombatState, id: string, isGM: boolean, playerId: string, partyPlayers: PartyPlayer[]): void {
+export function showEditModalHandler(
+  state: CombatState,
+  id: string,
+  isGM: boolean,
+  playerId: string,
+  partyPlayers: PartyPlayer[],
+): void {
   const c = state.combatants.find((c) => c.id === id);
   if (!c) return;
-  showModal(renderEditModal(c, isGM, partyPlayers, playerId), (action, data) => {
+  showModal(renderEditModal(c, isGM, partyPlayers, playerId), (action, _data) => {
     if (action === "save-combatant") {
       saveCombatantFromModal(state, id, isGM, playerId);
       closeModal();
@@ -390,18 +439,22 @@ function createCombatantFromModal(
   side: CombatantSide,
   playerId: string,
 ): string {
-  const name = (document.querySelector("#edit-name") as HTMLInputElement)?.value?.trim() || "Unknown";
+  const name =
+    (document.querySelector("#edit-name") as HTMLInputElement)?.value?.trim() || "Unknown";
   const hpMax = parseInt((document.querySelector("#edit-hp-max") as HTMLInputElement)?.value) || 8;
   const ac = parseInt((document.querySelector("#edit-ac") as HTMLInputElement)?.value) || 9;
   const thac0 = parseInt((document.querySelector("#edit-thac0") as HTMLInputElement)?.value) || 19;
-  const dex = (document.querySelector("#edit-dex") as HTMLSelectElement)?.value as DexCategory || "standard";
-  const apBase = parseInt((document.querySelector("#edit-ap-base") as HTMLInputElement)?.value) || (side === "monster" ? MONSTER_BASE_AP : PLAYER_BASE_AP);
-  const apVariance = (document.querySelector("#edit-ap-variance") as HTMLInputElement)?.checked ?? (side === "player");
+  const dex =
+    ((document.querySelector("#edit-dex") as HTMLSelectElement)?.value as DexCategory) ||
+    "standard";
+  const apBase =
+    parseInt((document.querySelector("#edit-ap-base") as HTMLInputElement)?.value) ||
+    (side === "monster" ? MONSTER_BASE_AP : PLAYER_BASE_AP);
+  const apVariance =
+    (document.querySelector("#edit-ap-variance") as HTMLInputElement)?.checked ?? side === "player";
 
   const ownerSelect = document.querySelector("#edit-owner") as HTMLSelectElement | null;
-  const ownerId = side === "player"
-    ? (ownerSelect?.value || playerId)
-    : undefined;
+  const ownerId = side === "player" ? ownerSelect?.value || playerId : undefined;
 
   const combatant: Combatant = {
     id: generateId(),
@@ -434,11 +487,17 @@ export function saveCombatantFromModal(
   if (!c) return;
 
   const name = (document.querySelector("#edit-name") as HTMLInputElement)?.value?.trim() || c.name;
-  const hpCurrent = parseInt((document.querySelector("#edit-hp") as HTMLInputElement)?.value) ?? c.stats.hpCurrent;
-  const hpMax = parseInt((document.querySelector("#edit-hp-max") as HTMLInputElement)?.value) || c.stats.hpMax;
-  const ac = parseInt((document.querySelector("#edit-ac") as HTMLInputElement)?.value) ?? c.stats.ac;
-  const thac0 = parseInt((document.querySelector("#edit-thac0") as HTMLInputElement)?.value) || c.stats.thac0;
-  const dex = (document.querySelector("#edit-dex") as HTMLSelectElement)?.value as DexCategory || c.dexCategory;
+  const hpCurrent =
+    parseInt((document.querySelector("#edit-hp") as HTMLInputElement)?.value) ?? c.stats.hpCurrent;
+  const hpMax =
+    parseInt((document.querySelector("#edit-hp-max") as HTMLInputElement)?.value) || c.stats.hpMax;
+  const ac =
+    parseInt((document.querySelector("#edit-ac") as HTMLInputElement)?.value) ?? c.stats.ac;
+  const thac0 =
+    parseInt((document.querySelector("#edit-thac0") as HTMLInputElement)?.value) || c.stats.thac0;
+  const dex =
+    ((document.querySelector("#edit-dex") as HTMLSelectElement)?.value as DexCategory) ||
+    c.dexCategory;
 
   const isOwner = playerId ? c.ownerId === playerId : false;
   const canEditName = isGM || isOwner;
@@ -450,8 +509,10 @@ export function saveCombatantFromModal(
   };
 
   if (isGM) {
-    const apBase = parseInt((document.querySelector("#edit-ap-base") as HTMLInputElement)?.value) || c.apBase;
-    const apVariance = (document.querySelector("#edit-ap-variance") as HTMLInputElement)?.checked ?? c.apVariance;
+    const apBase =
+      parseInt((document.querySelector("#edit-ap-base") as HTMLInputElement)?.value) || c.apBase;
+    const apVariance =
+      (document.querySelector("#edit-ap-variance") as HTMLInputElement)?.checked ?? c.apVariance;
     updated.apBase = apBase;
     updated.apVariance = apVariance;
 
@@ -463,14 +524,12 @@ export function saveCombatantFromModal(
 
   const newState: CombatState = {
     ...state,
-    combatants: state.combatants.map((existing) =>
-      existing.id === id ? updated : existing,
-    ),
+    combatants: state.combatants.map((existing) => (existing.id === id ? updated : existing)),
   };
   saveState(newState);
 }
 
-function removeCombatant(state: CombatState, id: string): void {
+function _removeCombatant(state: CombatState, id: string): void {
   const updated: CombatState = {
     ...state,
     combatants: state.combatants.filter((c) => c.id !== id),

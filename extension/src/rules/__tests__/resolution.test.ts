@@ -39,10 +39,7 @@ describe("buildResolutionOrder", () => {
 
   it("excludes unlocked declarations", () => {
     const state = makeCombatState({
-      combatants: [
-        makeCombatant({ id: "a" }),
-        makeCombatant({ id: "b" }),
-      ],
+      combatants: [makeCombatant({ id: "a" }), makeCombatant({ id: "b" })],
       round: makeRound({
         apCurrent: { a: 5, b: 8 },
         currentCycle: {
@@ -61,10 +58,7 @@ describe("buildResolutionOrder", () => {
 
   it("ties preserve array order (simultaneous)", () => {
     const state = makeCombatState({
-      combatants: [
-        makeCombatant({ id: "a" }),
-        makeCombatant({ id: "b" }),
-      ],
+      combatants: [makeCombatant({ id: "a" }), makeCombatant({ id: "b" })],
       round: makeRound({
         apCurrent: { a: 5, b: 5 },
         currentCycle: {
@@ -97,17 +91,13 @@ describe("deductCycleCosts", () => {
 
   it("floors AP at 0", () => {
     const ap = { a: 2 };
-    const decls = [
-      makeDeclaration({ combatantId: "a", cost: 5, resolved: true }),
-    ];
+    const decls = [makeDeclaration({ combatantId: "a", cost: 5, resolved: true })];
     expect(deductCycleCosts(ap, decls)).toEqual({ a: 0 });
   });
 
   it("skips unresolved declarations", () => {
     const ap = { a: 7 };
-    const decls = [
-      makeDeclaration({ combatantId: "a", cost: 3, resolved: false }),
-    ];
+    const decls = [makeDeclaration({ combatantId: "a", cost: 3, resolved: false })];
     expect(deductCycleCosts(ap, decls)).toEqual({ a: 7 });
   });
 
@@ -126,9 +116,7 @@ describe("deductCycleCosts", () => {
 
   it("does not mutate original map", () => {
     const ap = { a: 7 };
-    const decls = [
-      makeDeclaration({ combatantId: "a", cost: 3, resolved: true }),
-    ];
+    const decls = [makeDeclaration({ combatantId: "a", cost: 3, resolved: true })];
     deductCycleCosts(ap, decls);
     expect(ap.a).toBe(7);
   });

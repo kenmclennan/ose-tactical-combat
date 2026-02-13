@@ -1,5 +1,5 @@
 import OBR from "@owlbear-rodeo/sdk";
-import { EXTENSION_ID, MONSTER_BASE_AP, PLAYER_BASE_AP } from "./util/constants";
+import { EXTENSION_ID, MONSTER_BASE_AP } from "./util/constants";
 import { METADATA_KEY } from "./types";
 import type { CombatState, Combatant } from "./types";
 import { generateId } from "./util/ids";

@@ -1,18 +1,13 @@
 import { describe, it, expect } from "vitest";
-import {
-  rollVariance,
-  getSurpriseAp,
-  dexScoreToCat,
-  computeStartingAp,
-} from "../ap";
+import { rollVariance, getSurpriseAp, dexScoreToCat, computeStartingAp } from "../ap";
 import type { DexCategory } from "../../types";
 
 describe("rollVariance", () => {
   const expected: Record<DexCategory, number[]> = {
     //          roll: 1  2  3  4  5  6
-    penalty:         [6, 6, 7, 7, 7, 8],
-    standard:        [6, 7, 7, 7, 7, 8],
-    bonus:           [6, 7, 7, 7, 8, 8],
+    penalty: [6, 6, 7, 7, 7, 8],
+    standard: [6, 7, 7, 7, 7, 8],
+    bonus: [6, 7, 7, 7, 8, 8],
   };
 
   const categories: DexCategory[] = ["penalty", "standard", "bonus"];

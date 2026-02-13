@@ -2,7 +2,12 @@ import type { CombatState, CombatPhase } from "../types";
 import { saveState, clearState } from "../state/store";
 import { loadRoster, rosterToCombatant } from "../state/roster";
 import { generateId } from "../util/ids";
-import { renderSetupView, bindSetupEvents, showEditModalHandler, showAddModalHandler } from "./views/setup";
+import {
+  renderSetupView,
+  bindSetupEvents,
+  showEditModalHandler,
+  showAddModalHandler,
+} from "./views/setup";
 import { showModal, closeModal } from "./modal";
 import { saveRoster } from "../state/roster";
 import { renderRoundStartView, bindRoundStartEvents } from "./views/round-start";
@@ -146,7 +151,6 @@ function renderPhaseContent(ctx: RenderContext): string {
       phaseHtml = `<div class="empty-state">Unknown phase</div>`;
   }
 
-
   // Append persistent "End Combat" footer for GM during active combat phases
   // End Combat is now inline in each phase's button row
   const showEndCombat = false;
@@ -218,7 +222,8 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
         const c = state.combatants.find((c) => c.id === id);
         if (!c) return;
         const name = c.name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-        showModal(`
+        showModal(
+          `
           <div class="modal-overlay" data-modal-overlay="true">
             <div class="modal">
               <div class="modal-header">
@@ -234,23 +239,25 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
               </div>
             </div>
           </div>
-        `, (modalAction, data) => {
-          if (modalAction === "confirm-remove" && data.id) {
-            const updated: CombatState = {
-              ...state,
-              combatants: state.combatants.filter((c) => c.id !== data.id),
-            };
-            // Also remove from doneForRound if present
-            if (updated.round?.doneForRound) {
-              updated.round = {
-                ...updated.round,
-                doneForRound: updated.round.doneForRound.filter((did) => did !== data.id),
+        `,
+          (modalAction, data) => {
+            if (modalAction === "confirm-remove" && data.id) {
+              const updated: CombatState = {
+                ...state,
+                combatants: state.combatants.filter((c) => c.id !== data.id),
               };
+              // Also remove from doneForRound if present
+              if (updated.round?.doneForRound) {
+                updated.round = {
+                  ...updated.round,
+                  doneForRound: updated.round.doneForRound.filter((did) => did !== data.id),
+                };
+              }
+              saveState(updated);
+              closeModal();
             }
-            saveState(updated);
-            closeModal();
-          }
-        });
+          },
+        );
       }
     }
 
@@ -261,7 +268,6 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
         showAddModalHandler(state, side, playerId, isGM, partyPlayers, state.phase !== "setup");
       }
     }
-
   });
 
   if (!state) return;

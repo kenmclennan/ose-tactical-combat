@@ -5,9 +5,7 @@ import type { ActionCategory, ActionId } from "../../types";
 describe("ACTION_LIST", () => {
   it("is sorted by displayOrder", () => {
     for (let i = 1; i < ACTION_LIST.length; i++) {
-      expect(ACTION_LIST[i].displayOrder).toBeGreaterThanOrEqual(
-        ACTION_LIST[i - 1].displayOrder,
-      );
+      expect(ACTION_LIST[i].displayOrder).toBeGreaterThanOrEqual(ACTION_LIST[i - 1].displayOrder);
     }
   });
 

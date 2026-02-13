@@ -1,15 +1,7 @@
 import { describe, it, expect } from "vitest";
-import {
-  calculateFuryBanked,
-  canSpendFury,
-  appendFuryLog,
-} from "../fury";
+import { calculateFuryBanked, canSpendFury, appendFuryLog } from "../fury";
 import type { FuryLogEntry } from "../../types";
-import {
-  makeCombatant,
-  makeCombatState,
-  makeRound,
-} from "../../__tests__/fixtures";
+import { makeCombatant, makeCombatState, makeRound } from "../../__tests__/fixtures";
 import { MAX_FURY_PER_PLAYER_PER_ROUND, FURY_LOG_MAX } from "../../util/constants";
 
 describe("calculateFuryBanked", () => {
@@ -56,9 +48,7 @@ describe("calculateFuryBanked", () => {
 
   it("returns 0 with no active players", () => {
     const state = makeCombatState({
-      combatants: [
-        makeCombatant({ id: "m1", side: "monster" }),
-      ],
+      combatants: [makeCombatant({ id: "m1", side: "monster" })],
       round: makeRound({ apCurrent: { m1: 5 } }),
     });
     expect(calculateFuryBanked(state)).toBe(0);

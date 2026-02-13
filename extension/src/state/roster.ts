@@ -40,9 +40,7 @@ export function rosterToCombatant(entry: RosterEntry, id: string): Combatant {
 }
 
 export async function saveRoster(players: Combatant[]): Promise<void> {
-  const entries = players
-    .filter((c) => c.side === "player")
-    .map(combatantToRoster);
+  const entries = players.filter((c) => c.side === "player").map(combatantToRoster);
   await OBR.room.setMetadata({ [ROSTER_KEY]: entries });
 }
 

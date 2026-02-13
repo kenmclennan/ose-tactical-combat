@@ -7,7 +7,7 @@ import {
   allDeclarationsLocked,
   isDoneForRound,
 } from "../../state/selectors";
-import { ACTION_LIST, ACTIONS, CATEGORY_ORDER, CATEGORY_LABELS } from "../../rules/actions";
+import { ACTION_LIST, CATEGORY_ORDER, CATEGORY_LABELS } from "../../rules/actions";
 import { buildResolutionOrder, deductCycleCosts } from "../../rules/resolution";
 import { renderCombatantCard, type CardOptions } from "../components/combatant-card";
 
@@ -39,7 +39,9 @@ export function renderDeclarationView(
         </div>
         ${monsters.map((c) => renderDeclarationRow(c, state, playerId, isGM, partyPlayers)).join("")}
       </div>
-      ${isGM ? `
+      ${
+        isGM
+          ? `
         <div class="declaration-actions">
           <div class="round-actions-row">
             <button class="btn btn-secondary" data-action="end-combat">End Combat</button>
@@ -48,7 +50,9 @@ export function renderDeclarationView(
           </div>
           ${!allLocked ? `<div class="hint">Waiting for all declarations to lock in</div>` : ""}
         </div>
-      ` : ""}
+      `
+          : ""
+      }
     </div>
   `;
 }
@@ -64,7 +68,8 @@ function renderDeclarationRow(
   const decl = getDeclaration(state, c.id);
   const isOwner = c.ownerId === playerId;
   const canDeclare = (isGM && c.side === "monster") || isOwner;
-  const ownerName = c.side === "monster" ? "GM" : partyPlayers.find((p) => p.id === c.ownerId)?.name;
+  const ownerName =
+    c.side === "monster" ? "GM" : partyPlayers.find((p) => p.id === c.ownerId)?.name;
 
   const cardOpts: CardOptions = {
     showAp: true,
@@ -132,14 +137,16 @@ function renderDeclarationRow(
     const actionName = isDone
       ? "Done"
       : showAction
-        ? ACTION_LIST.find((a) => a.id === decl.actionId)?.name ?? decl.actionId
+        ? (ACTION_LIST.find((a) => a.id === decl.actionId)?.name ?? decl.actionId)
         : null;
     const lockedStatus = showAction
       ? `<span class="decl-action-label">${actionName}${isDone ? "" : ` (${decl.cost} AP)`}</span>`
       : `<span class="badge badge-info">Locked</span>`;
     const lockedCardOpts: CardOptions = {
       ...cardOpts,
-      extraActions: isGM ? `<button class="btn-icon" data-action="unlock-declaration" data-combatant-id="${c.id}" title="Unlock">&#x1F513;</button>` : undefined,
+      extraActions: isGM
+        ? `<button class="btn-icon" data-action="unlock-declaration" data-combatant-id="${c.id}" title="Unlock">&#x1F513;</button>`
+        : undefined,
       statusContent: lockedStatus,
     };
     return `
@@ -165,7 +172,7 @@ function renderActionPicker(
   // Filter out "done" from the action list - it has its own button
   const actions = ACTION_LIST.filter((a) => a.id !== "done");
 
-  const renderButton = (a: typeof actions[number]) => {
+  const renderButton = (a: (typeof actions)[number]) => {
     const affordable = a.cost <= ap;
     const selected = currentDecl?.actionId === a.id;
     return `

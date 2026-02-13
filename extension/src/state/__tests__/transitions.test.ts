@@ -62,17 +62,11 @@ describe("getValidTransitions", () => {
   });
 
   it("cycle-end → [declaration, round-end]", () => {
-    expect(getValidTransitions("cycle-end")).toEqual([
-      "declaration",
-      "round-end",
-    ]);
+    expect(getValidTransitions("cycle-end")).toEqual(["declaration", "round-end"]);
   });
 
   it("round-end → [round-start, combat-end]", () => {
-    expect(getValidTransitions("round-end")).toEqual([
-      "round-start",
-      "combat-end",
-    ]);
+    expect(getValidTransitions("round-end")).toEqual(["round-start", "combat-end"]);
   });
 
   it("combat-end → [setup]", () => {

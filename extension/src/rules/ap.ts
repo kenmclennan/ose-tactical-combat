@@ -1,5 +1,5 @@
 import type { DexCategory } from "../types";
-import { PLAYER_BASE_AP, SURPRISE_DIVISOR } from "../util/constants";
+import { SURPRISE_DIVISOR } from "../util/constants";
 
 /**
  * AP variance table from TACS v1.1.
@@ -13,10 +13,7 @@ const VARIANCE_TABLE: Record<DexCategory, number[]> = {
   bonus: [6, 7, 7, 7, 8, 8],
 };
 
-export function rollVariance(
-  roll: number,
-  dexCategory: DexCategory,
-): number {
+export function rollVariance(roll: number, dexCategory: DexCategory): number {
   const clamped = Math.max(1, Math.min(6, Math.round(roll)));
   return VARIANCE_TABLE[dexCategory][clamped - 1];
 }

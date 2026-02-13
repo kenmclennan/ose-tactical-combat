@@ -5,7 +5,10 @@
 
 let currentModal: HTMLElement | null = null;
 
-export function showModal(html: string, onAction: (action: string, data: Record<string, string | undefined>) => void): void {
+export function showModal(
+  html: string,
+  onAction: (action: string, data: Record<string, string | undefined>) => void,
+): void {
   closeModal();
 
   const overlay = document.createElement("div");

@@ -5,10 +5,7 @@ export function getActiveCombatants(state: CombatState): Combatant[] {
   return state.combatants.filter((c) => c.status === "active");
 }
 
-export function getCombatantById(
-  state: CombatState,
-  id: string,
-): Combatant | undefined {
+export function getCombatantById(state: CombatState, id: string): Combatant | undefined {
   return state.combatants.find((c) => c.id === id);
 }
 
@@ -24,21 +21,13 @@ export function getCurrentAp(state: CombatState, combatantId: string): number {
   return state.round?.apCurrent[combatantId] ?? 0;
 }
 
-export function getAffordableActions(
-  state: CombatState,
-  combatantId: string,
-): ActionDefinition[] {
+export function getAffordableActions(state: CombatState, combatantId: string): ActionDefinition[] {
   const ap = getCurrentAp(state, combatantId);
   return ACTION_LIST.filter((a) => a.cost <= ap);
 }
 
-export function getDeclaration(
-  state: CombatState,
-  combatantId: string,
-): Declaration | undefined {
-  return state.round?.currentCycle.declarations.find(
-    (d) => d.combatantId === combatantId,
-  );
+export function getDeclaration(state: CombatState, combatantId: string): Declaration | undefined {
+  return state.round?.currentCycle.declarations.find((d) => d.combatantId === combatantId);
 }
 
 export function isDoneForRound(state: CombatState, combatantId: string): boolean {
