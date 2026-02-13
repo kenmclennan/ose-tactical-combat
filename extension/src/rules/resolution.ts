@@ -1,5 +1,6 @@
 import type { CombatState, Declaration } from "../types";
 import { getCurrentAp } from "../state/selectors";
+import { getAction } from "./actions";
 
 /**
  * Build resolution order: highest current AP first.
@@ -33,6 +34,26 @@ export function deductCycleCosts(
   for (const decl of declarations) {
     if (decl.resolved) {
       updated[decl.combatantId] = Math.max(0, (updated[decl.combatantId] ?? 0) - decl.cost);
+    }
+  }
+  return updated;
+}
+
+/**
+ * Deduct move costs for all resolved declarations in the current cycle.
+ * Returns updated movesUsed map.
+ */
+export function deductCycleMoveCosts(
+  movesUsed: Record<string, number>,
+  declarations: Declaration[],
+): Record<string, number> {
+  const updated = { ...movesUsed };
+  for (const decl of declarations) {
+    if (decl.resolved) {
+      const action = getAction(decl.actionId);
+      if (action.moveCost > 0) {
+        updated[decl.combatantId] = (updated[decl.combatantId] ?? 0) + action.moveCost;
+      }
     }
   }
   return updated;

@@ -6,9 +6,14 @@ import {
   getDeclaration,
   allDeclarationsLocked,
   isDoneForRound,
+  getRemainingMoves,
 } from "../../state/selectors";
 import { ACTION_LIST, CATEGORY_ORDER, CATEGORY_LABELS } from "../../rules/actions";
-import { buildResolutionOrder, deductCycleCosts } from "../../rules/resolution";
+import {
+  buildResolutionOrder,
+  deductCycleCosts,
+  deductCycleMoveCosts,
+} from "../../rules/resolution";
 import { renderCombatantCard, type CardOptions } from "../components/combatant-card";
 
 export function renderDeclarationView(
@@ -116,7 +121,7 @@ function renderDeclarationRow(
       <div class="decl-row decl-active ${!decl ? "decl-undeclared" : ""}" data-combatant-id="${c.id}">
         ${renderCombatantCard(c, state, cardOpts)}
         <div class="action-picker">
-          ${renderActionPicker(c.id, ap, decl)}
+          ${renderActionPicker(c.id, ap, getRemainingMoves(state, c.id), decl)}
         </div>
         <div class="decl-controls">
           <button class="btn btn-sm btn-done" data-action="declare-done" data-combatant-id="${c.id}">
@@ -167,13 +172,14 @@ function renderDeclarationRow(
 function renderActionPicker(
   combatantId: string,
   ap: number,
+  remainingMoves: number,
   currentDecl: Declaration | undefined,
 ): string {
   // Filter out "done" from the action list - it has its own button
   const actions = ACTION_LIST.filter((a) => a.id !== "done");
 
   const renderButton = (a: (typeof actions)[number]) => {
-    const affordable = a.cost <= ap;
+    const affordable = a.cost <= ap && a.moveCost <= remainingMoves;
     const selected = currentDecl?.actionId === a.id;
     return `
       <button
@@ -401,6 +407,7 @@ function forceEndRound(state: CombatState): void {
   const round = state.round!;
   const cycle = round.currentCycle;
   const apCurrent = deductCycleCosts(round.apCurrent, cycle.declarations);
+  const movesUsed = deductCycleMoveCosts(round.movesUsed, cycle.declarations);
 
   saveState({
     ...state,
@@ -408,6 +415,7 @@ function forceEndRound(state: CombatState): void {
     round: {
       ...round,
       apCurrent,
+      movesUsed,
       completedCycles: round.completedCycles + 1,
     },
   });

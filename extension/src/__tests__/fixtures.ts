@@ -20,6 +20,7 @@ export function makeRound(overrides: Partial<RoundState> = {}): RoundState {
     roundNumber: 1,
     apRolls: {},
     apCurrent: {},
+    movesUsed: {},
     currentCycle: {
       cycleNumber: 1,
       declarations: [],

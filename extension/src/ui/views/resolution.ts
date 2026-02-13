@@ -2,7 +2,7 @@ import type { CombatState, Combatant, Declaration } from "../../types";
 import { saveState } from "../../state/store";
 import { getCombatantById, getCurrentAp, anyoneCanAct } from "../../state/selectors";
 import { ACTION_LIST } from "../../rules/actions";
-import { deductCycleCosts } from "../../rules/resolution";
+import { deductCycleCosts, deductCycleMoveCosts } from "../../rules/resolution";
 import { renderCombatantCard, type CardOptions } from "../components/combatant-card";
 
 export function renderResolutionView(
@@ -224,13 +224,14 @@ function endCycle(state: CombatState): void {
   const round = state.round!;
   const cycle = round.currentCycle;
 
-  // Deduct AP costs
+  // Deduct AP and move costs
   const apCurrent = deductCycleCosts(round.apCurrent, cycle.declarations);
+  const movesUsed = deductCycleMoveCosts(round.movesUsed, cycle.declarations);
 
   // Check if anyone can still act
   const testState: CombatState = {
     ...state,
-    round: { ...round, apCurrent },
+    round: { ...round, apCurrent, movesUsed },
   };
 
   if (anyoneCanAct(testState)) {
@@ -240,6 +241,7 @@ function endCycle(state: CombatState): void {
       round: {
         ...round,
         apCurrent,
+        movesUsed,
         currentCycle: {
           cycleNumber: cycle.cycleNumber + 1,
           declarations: [],
@@ -256,6 +258,7 @@ function endCycle(state: CombatState): void {
       round: {
         ...round,
         apCurrent,
+        movesUsed,
         completedCycles: round.completedCycles + 1,
       },
     });
@@ -266,6 +269,7 @@ function forceEndRound(state: CombatState): void {
   const round = state.round!;
   const cycle = round.currentCycle;
   const apCurrent = deductCycleCosts(round.apCurrent, cycle.declarations);
+  const movesUsed = deductCycleMoveCosts(round.movesUsed, cycle.declarations);
 
   saveState({
     ...state,
@@ -273,6 +277,7 @@ function forceEndRound(state: CombatState): void {
     round: {
       ...round,
       apCurrent,
+      movesUsed,
       completedCycles: round.completedCycles + 1,
     },
   });

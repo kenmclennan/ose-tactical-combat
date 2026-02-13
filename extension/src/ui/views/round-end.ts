@@ -110,6 +110,7 @@ function nextRound(state: CombatState): void {
       roundNumber: round.roundNumber + 1,
       apRolls: {},
       apCurrent: {},
+      movesUsed: {},
       currentCycle: {
         cycleNumber: 1,
         declarations: [],

@@ -39,6 +39,7 @@ describe("action definitions", () => {
       expect(a.id).toBe(id);
       expect(typeof a.name).toBe("string");
       expect(typeof a.cost).toBe("number");
+      expect(typeof a.moveCost).toBe("number");
       expect(typeof a.description).toBe("string");
       expect(typeof a.category).toBe("string");
       expect(typeof a.displayOrder).toBe("number");
@@ -67,6 +68,30 @@ describe("action definitions", () => {
     for (const id of moveIds) {
       expect(ACTIONS[id].category).toBe("move");
     }
+  });
+
+  it("move-category actions have moveCost > 0", () => {
+    for (const id of ids) {
+      if (ACTIONS[id].category === "move") {
+        expect(ACTIONS[id].moveCost).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it("non-move actions have moveCost === 0", () => {
+    for (const id of ids) {
+      if (ACTIONS[id].category !== "move") {
+        expect(ACTIONS[id].moveCost).toBe(0);
+      }
+    }
+  });
+
+  it("move-half costs 1 move point, other move actions cost 2", () => {
+    expect(ACTIONS["move-half"].moveCost).toBe(1);
+    expect(ACTIONS["move-full"].moveCost).toBe(2);
+    expect(ACTIONS["fighting-withdrawal"].moveCost).toBe(2);
+    expect(ACTIONS["retreat"].moveCost).toBe(2);
+    expect(ACTIONS["charge"].moveCost).toBe(2);
   });
 
   it("attack actions are in act category", () => {

@@ -28,6 +28,7 @@ export interface ActionDefinition {
   id: ActionId;
   name: string;
   cost: number;
+  moveCost: number;
   description: string;
   category: ActionCategory;
   displayOrder: number;

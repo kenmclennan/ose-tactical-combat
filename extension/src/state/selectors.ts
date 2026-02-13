@@ -1,5 +1,6 @@
 import type { CombatState, Combatant, Declaration, ActionDefinition } from "../types";
 import { ACTION_LIST } from "../rules/actions";
+import { MOVE_ALLOWANCE } from "../util/constants";
 
 export function getActiveCombatants(state: CombatState): Combatant[] {
   return state.combatants.filter((c) => c.status === "active");
@@ -53,6 +54,10 @@ export function anyoneCanAct(state: CombatState): boolean {
     if (isDoneForRound(state, c.id)) return false;
     return getCurrentAp(state, c.id) >= 1;
   });
+}
+
+export function getRemainingMoves(state: CombatState, combatantId: string): number {
+  return MOVE_ALLOWANCE - (state.round?.movesUsed[combatantId] ?? 0);
 }
 
 export function getResolutionOrder(state: CombatState): string[] {

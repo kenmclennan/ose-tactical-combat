@@ -1,6 +1,7 @@
 import type { CombatState, Combatant } from "../../types";
 import { saveState } from "../../state/store";
-import { getCurrentAp } from "../../state/selectors";
+import { getCurrentAp, getRemainingMoves } from "../../state/selectors";
+import { MOVE_ALLOWANCE } from "../../util/constants";
 import { showModal, closeModal } from "../modal";
 
 export interface CardOptions {
@@ -21,6 +22,7 @@ export interface CardOptions {
 export function renderCombatantCard(c: Combatant, state: CombatState, opts: CardOptions): string {
   const isOut = c.status !== "active";
   const ap = opts.showAp ? getCurrentAp(state, c.id) : null;
+  const remainingMoves = opts.showAp ? getRemainingMoves(state, c.id) : null;
   const canEdit = opts.isGM || opts.isOwner;
   const showStats = opts.isGM || c.side === "player";
 
@@ -60,6 +62,7 @@ export function renderCombatantCard(c: Combatant, state: CombatState, opts: Card
               : ""
           }
           ${ap !== null && opts.dieResult !== undefined ? `<span class="stat die-result">[${opts.dieResult}]</span>` : ""}
+          ${remainingMoves !== null ? `<span class="stat stat-mv">${remainingMoves}/${MOVE_ALLOWANCE} Mv</span>` : ""}
           ${opts.extraStats ?? ""}
         </div>
       `
@@ -69,6 +72,7 @@ export function renderCombatantCard(c: Combatant, state: CombatState, opts: Card
           ${opts.extraStats ?? ""}
           ${ap !== null ? `<span class="stat stat-ap">${ap} AP</span>` : ""}
           ${ap !== null && opts.dieResult !== undefined ? `<span class="stat die-result">[${opts.dieResult}]</span>` : ""}
+          ${remainingMoves !== null ? `<span class="stat stat-mv">${remainingMoves}/${MOVE_ALLOWANCE} Mv</span>` : ""}
         </div>
       `
       }

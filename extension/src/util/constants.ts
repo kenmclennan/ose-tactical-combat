@@ -1,3 +1,4 @@
+export const MOVE_ALLOWANCE = 2;
 export const PLAYER_BASE_AP = 7;
 export const MONSTER_BASE_AP = 6;
 export const SURPRISE_DIVISOR = 2;

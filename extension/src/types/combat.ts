@@ -30,6 +30,7 @@ export interface RoundState {
   roundNumber: number;
   apRolls: Record<string, number>;
   apCurrent: Record<string, number>;
+  movesUsed: Record<string, number>;
   currentCycle: CycleState;
   completedCycles: number;
   doneForRound: string[];
