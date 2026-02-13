@@ -29,7 +29,7 @@ export function renderSetupView(
         </div>
         <div class="combatant-list">
           ${players.length === 0 ? `<div class="empty-list">No players added</div>` : ""}
-          ${players.map((c) => renderSetupCard(c, state, playerId, isGM)).join("")}
+          ${players.map((c) => renderSetupCard(c, state, playerId, isGM, _partyPlayers)).join("")}
         </div>
       </div>
 
@@ -40,7 +40,7 @@ export function renderSetupView(
         </div>
         <div class="combatant-list">
           ${monsters.length === 0 ? `<div class="empty-list">No monsters added</div>` : ""}
-          ${monsters.map((c) => renderSetupCard(c, state, playerId, isGM)).join("")}
+          ${monsters.map((c) => renderSetupCard(c, state, playerId, isGM, _partyPlayers)).join("")}
         </div>
       </div>
 
@@ -64,9 +64,11 @@ function renderSetupCard(
   state: CombatState,
   playerId: string,
   isGM: boolean,
+  partyPlayers: PartyPlayer[] = [],
 ): string {
   const isOwner = c.ownerId === playerId;
   const showStats = isGM || c.side === "player";
+  const ownerName = c.side === "monster" ? "GM" : partyPlayers.find((p) => p.id === c.ownerId)?.name;
 
   const dexLabels: Record<DexCategory, string> = {
     penalty: "DEX-",
@@ -91,6 +93,7 @@ function renderSetupCard(
     isGM,
     isOwner,
     playerId,
+    ownerName,
     extraStats,
     extraActions,
   };
