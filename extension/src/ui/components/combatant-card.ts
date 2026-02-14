@@ -1,5 +1,5 @@
 import type { CombatState, Combatant } from "../../types";
-import { saveState } from "../../state/store";
+import { getState, updateState } from "../../state/store";
 import { getCurrentAp, getRemainingMoves } from "../../state/selectors";
 import { MOVE_ALLOWANCE } from "../../util/constants";
 import { showModal, closeModal } from "../modal";
@@ -97,13 +97,7 @@ function escapeHtml(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-export function bindCardEvents(
-  container: HTMLElement,
-  state: CombatState,
-  playerId: string,
-  isGM: boolean,
-  _partyPlayers: { id: string; name: string }[] = [],
-): void {
+export function bindCardEvents(container: HTMLElement, playerId: string, isGM: boolean): void {
   container.addEventListener("click", (e) => {
     const target = (e.target as HTMLElement).closest("[data-action]") as HTMLElement | null;
     if (!target) return;
@@ -111,47 +105,56 @@ export function bindCardEvents(
     const id = target.dataset.id;
 
     if (action === "toggle-status" && id && isGM) {
-      toggleCombatantStatus(state, id);
+      toggleCombatantStatus(id);
     }
 
     if (action === "edit-hp" && id) {
-      showHpEditModal(state, id, playerId, isGM);
+      const s = getState();
+      if (!s) return;
+      const c = s.combatants.find((c) => c.id === id);
+      if (!c) return;
+      const canEdit = isGM || c.ownerId === playerId;
+      if (canEdit) showHpEditModal(id);
     }
 
     if (action === "edit-ap" && id) {
-      const c = state.combatants.find((c) => c.id === id);
+      const s = getState();
+      if (!s) return;
+      const c = s.combatants.find((c) => c.id === id);
       if (c && (isGM || c.ownerId === playerId)) {
-        showApEditModal(state, id);
+        showApEditModal(id);
       }
     }
   });
 }
 
-function toggleCombatantStatus(state: CombatState, id: string): void {
-  const combatants = state.combatants.map((c) => {
-    if (c.id !== id) return c;
-    return {
-      ...c,
-      status: c.status === "active" ? ("incapacitated" as const) : ("active" as const),
-    };
+function toggleCombatantStatus(id: string): void {
+  updateState((s) => {
+    const combatants = s.combatants.map((c) => {
+      if (c.id !== id) return c;
+      return {
+        ...c,
+        status: c.status === "active" ? ("incapacitated" as const) : ("active" as const),
+      };
+    });
+    const newState: CombatState = { ...s, combatants };
+    // Zero AP when toggling to incapacitated
+    const toggled = combatants.find((c) => c.id === id);
+    if (toggled?.status === "incapacitated" && newState.round) {
+      newState.round = {
+        ...newState.round,
+        apCurrent: { ...newState.round.apCurrent, [id]: 0 },
+      };
+    }
+    return newState;
   });
-  const newState: CombatState = { ...state, combatants };
-  // Zero AP when toggling to incapacitated
-  const toggled = combatants.find((c) => c.id === id);
-  if (toggled?.status === "incapacitated" && newState.round) {
-    newState.round = {
-      ...newState.round,
-      apCurrent: { ...newState.round.apCurrent, [id]: 0 },
-    };
-  }
-  saveState(newState);
 }
 
-function showHpEditModal(state: CombatState, id: string, playerId: string, isGM: boolean): void {
-  const c = state.combatants.find((c) => c.id === id);
+function showHpEditModal(id: string): void {
+  const s = getState();
+  if (!s) return;
+  const c = s.combatants.find((c) => c.id === id);
   if (!c) return;
-  const canEdit = isGM || c.ownerId === playerId;
-  if (!canEdit) return;
 
   const current = c.stats.hpCurrent;
 
@@ -183,26 +186,29 @@ function showHpEditModal(state: CombatState, id: string, playerId: string, isGM:
         const val = parseInt(input.value);
         if (isNaN(val) || val < 0) return;
 
-        const combatants = state.combatants.map((existing) =>
-          existing.id === id
-            ? {
-                ...existing,
-                stats: { ...existing.stats, hpCurrent: Math.min(val, existing.stats.hpMax) },
-              }
-            : existing,
-        );
-        saveState({ ...state, combatants });
+        updateState((s) => ({
+          ...s,
+          combatants: s.combatants.map((existing) =>
+            existing.id === id
+              ? {
+                  ...existing,
+                  stats: { ...existing.stats, hpCurrent: Math.min(val, existing.stats.hpMax) },
+                }
+              : existing,
+          ),
+        }));
         closeModal();
       }
     },
   );
 }
 
-export function showApEditModal(state: CombatState, id: string): void {
-  if (!state.round) return;
-  const c = state.combatants.find((c) => c.id === id);
+export function showApEditModal(id: string): void {
+  const s = getState();
+  if (!s?.round) return;
+  const c = s.combatants.find((c) => c.id === id);
   if (!c) return;
-  const current = state.round.apCurrent[id] ?? 0;
+  const current = s.round.apCurrent[id] ?? 0;
 
   showModal(
     `
@@ -232,13 +238,13 @@ export function showApEditModal(state: CombatState, id: string): void {
         const val = parseInt(input.value);
         if (isNaN(val) || val < 0) return;
 
-        saveState({
-          ...state,
+        updateState((s) => ({
+          ...s,
           round: {
-            ...state.round!,
-            apCurrent: { ...state.round!.apCurrent, [id]: val },
+            ...s.round!,
+            apCurrent: { ...s.round!.apCurrent, [id]: val },
           },
-        });
+        }));
         closeModal();
       }
     },

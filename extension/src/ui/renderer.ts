@@ -1,5 +1,5 @@
 import type { CombatState, CombatPhase } from "../types";
-import { saveState, clearState } from "../state/store";
+import { saveState, clearState, getState, updateState } from "../state/store";
 import { loadRoster, rosterToCombatant } from "../state/roster";
 import { generateId } from "../util/ids";
 import {
@@ -77,7 +77,10 @@ export function render(app: HTMLElement, ctx: RenderContext): void {
   const furyBadge = app.querySelector("[data-action='open-fury-modal']") as HTMLElement | null;
   if (furyBadge && state) {
     furyBadge.addEventListener("click", () => {
-      showFuryModal(state, ctx.playerId, isGM);
+      const freshState = getState();
+      if (freshState) {
+        showFuryModal(freshState, ctx.playerId, isGM);
+      }
     });
   }
 
@@ -195,9 +198,12 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
 
     if (action === "end-combat" && isGM && state) {
       // Save player roster before clearing
-      const players = state.combatants.filter((c) => c.side === "player");
-      if (players.length > 0) {
-        saveRoster(players);
+      const freshState = getState();
+      if (freshState) {
+        const players = freshState.combatants.filter((c) => c.side === "player");
+        if (players.length > 0) {
+          saveRoster(players);
+        }
       }
       clearState();
     }
@@ -206,11 +212,13 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
     if (action === "edit-combatant" && state) {
       const id = target.dataset.id;
       if (id) {
-        const c = state.combatants.find((c) => c.id === id);
+        const s = getState();
+        if (!s) return;
+        const c = s.combatants.find((c) => c.id === id);
         if (!c) return;
         const canEdit = isGM || c.ownerId === playerId;
         if (canEdit) {
-          showEditModalHandler(state, id, isGM, playerId, partyPlayers);
+          showEditModalHandler(id, isGM, playerId, partyPlayers);
         }
       }
     }
@@ -219,7 +227,9 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
     if (action === "remove-combatant" && state && isGM) {
       const id = target.dataset.id;
       if (id) {
-        const c = state.combatants.find((c) => c.id === id);
+        const s = getState();
+        if (!s) return;
+        const c = s.combatants.find((c) => c.id === id);
         if (!c) return;
         const name = c.name.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         showModal(
@@ -242,18 +252,20 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
         `,
           (modalAction, data) => {
             if (modalAction === "confirm-remove" && data.id) {
-              const updated: CombatState = {
-                ...state,
-                combatants: state.combatants.filter((c) => c.id !== data.id),
-              };
-              // Also remove from doneForRound if present
-              if (updated.round?.doneForRound) {
-                updated.round = {
-                  ...updated.round,
-                  doneForRound: updated.round.doneForRound.filter((did) => did !== data.id),
+              updateState((s) => {
+                const updated: CombatState = {
+                  ...s,
+                  combatants: s.combatants.filter((c) => c.id !== data.id),
                 };
-              }
-              saveState(updated);
+                // Also remove from doneForRound if present
+                if (updated.round?.doneForRound) {
+                  updated.round = {
+                    ...updated.round,
+                    doneForRound: updated.round.doneForRound.filter((did) => did !== data.id),
+                  };
+                }
+                return updated;
+              });
               closeModal();
             }
           },
@@ -265,7 +277,7 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
     if (action === "add-combatant" && state && isGM) {
       const side = target.dataset.side as "player" | "monster" | undefined;
       if (side) {
-        showAddModalHandler(state, side, playerId, isGM, partyPlayers, state.phase !== "setup");
+        showAddModalHandler(side, playerId, isGM, partyPlayers, state.phase !== "setup");
       }
     }
   });
@@ -273,25 +285,25 @@ function bindPhaseEvents(content: HTMLElement, ctx: RenderContext): void {
   if (!state) return;
 
   // Bind card events (inline HP/AP editing) for all phases with combatant cards
-  bindCardEvents(content, state, playerId, isGM, partyPlayers);
+  bindCardEvents(content, playerId, isGM);
 
   // Phase-specific events
   switch (state.phase) {
     case "setup":
-      bindSetupEvents(content, state, playerId, isGM, ctx.partyPlayers);
+      bindSetupEvents(content, playerId, isGM, ctx.partyPlayers);
       break;
     case "round-start":
-      bindRoundStartEvents(content, state, playerId, isGM);
+      bindRoundStartEvents(content, playerId, isGM);
       break;
     case "declaration":
-      bindDeclarationEvents(content, state, playerId, isGM);
+      bindDeclarationEvents(content, playerId, isGM);
       break;
     case "resolution":
     case "cycle-end":
-      bindResolutionEvents(content, state, playerId, isGM);
+      bindResolutionEvents(content, playerId, isGM);
       break;
     case "round-end":
-      bindRoundEndEvents(content, state, playerId, isGM);
+      bindRoundEndEvents(content, playerId, isGM);
       break;
   }
 }

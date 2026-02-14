@@ -1,5 +1,5 @@
 import type { CombatState } from "../../types";
-import { saveState } from "../../state/store";
+import { updateState } from "../../state/store";
 import { getPlayerCombatants, getCurrentAp } from "../../state/selectors";
 import { calculateFuryBanked } from "../../rules/fury";
 import { MAX_FURY_PER_PLAYER_PER_ROUND } from "../../util/constants";
@@ -64,62 +64,58 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-export function bindRoundEndEvents(
-  container: HTMLElement,
-  state: CombatState,
-  _playerId: string,
-  isGM: boolean,
-): void {
+export function bindRoundEndEvents(container: HTMLElement, _playerId: string, isGM: boolean): void {
   container.addEventListener("click", (e) => {
     const target = (e.target as HTMLElement).closest("[data-action]") as HTMLElement | null;
     if (!target) return;
     const action = target.dataset.action;
 
     if (action === "next-round" && isGM) {
-      nextRound(state);
+      nextRound();
     }
   });
 }
 
-function nextRound(state: CombatState): void {
-  const round = state.round!;
-  const furyBanked = calculateFuryBanked(state);
+function nextRound(): void {
+  updateState((s) => {
+    const round = s.round!;
+    const furyBanked = calculateFuryBanked(s);
 
-  // Clear surprise for next round
-  const combatants = state.combatants.map((c) => ({
-    ...c,
-    surprised: false,
-  }));
+    const combatants = s.combatants.map((c) => ({
+      ...c,
+      surprised: false,
+    }));
 
-  saveState({
-    ...state,
-    phase: "round-start",
-    combatants,
-    fury: {
-      current: state.fury.current + furyBanked,
-      log: [
-        ...state.fury.log.slice(-19),
-        {
-          type: "bank" as const,
-          amount: furyBanked,
-          round: round.roundNumber,
-        },
-      ],
-    },
-    round: {
-      roundNumber: round.roundNumber + 1,
-      apRolls: {},
-      apCurrent: {},
-      movesUsed: {},
-      currentCycle: {
-        cycleNumber: 1,
-        declarations: [],
-        resolutionOrder: [],
-        currentResolutionIndex: 0,
-        waitingCombatants: [],
+    return {
+      ...s,
+      phase: "round-start",
+      combatants,
+      fury: {
+        current: s.fury.current + furyBanked,
+        log: [
+          ...s.fury.log.slice(-19),
+          {
+            type: "bank" as const,
+            amount: furyBanked,
+            round: round.roundNumber,
+          },
+        ],
       },
-      completedCycles: 0,
-      doneForRound: [],
-    },
+      round: {
+        roundNumber: round.roundNumber + 1,
+        apRolls: {},
+        apCurrent: {},
+        movesUsed: {},
+        currentCycle: {
+          cycleNumber: 1,
+          declarations: [],
+          resolutionOrder: [],
+          currentResolutionIndex: 0,
+          waitingCombatants: [],
+        },
+        completedCycles: 0,
+        doneForRound: [],
+      },
+    };
   });
 }

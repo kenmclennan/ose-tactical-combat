@@ -1,5 +1,5 @@
 import type { CombatState, Combatant, Declaration, ActionId } from "../../types";
-import { saveState } from "../../state/store";
+import { getState, updateState } from "../../state/store";
 import {
   getCombatantById,
   getCurrentAp,
@@ -200,7 +200,6 @@ function escapeHtml(s: string): string {
 
 export function bindResolutionEvents(
   container: HTMLElement,
-  state: CombatState,
   playerId: string,
   isGM: boolean,
 ): void {
@@ -210,77 +209,83 @@ export function bindResolutionEvents(
     const action = target.dataset.action;
 
     if (action === "resolve-next" && isGM) {
-      resolveNext(state);
+      resolveNext();
     }
     if (action === "end-cycle" && isGM) {
-      endCycle(state);
+      endCycle();
     }
     if (action === "force-end-round" && isGM) {
-      forceEndRound(state);
+      forceEndRound();
     }
     if (action === "open-follow-up") {
       const combatantId = target.dataset.combatantId;
       if (!combatantId) return;
-      const c = getCombatantById(state, combatantId);
+      const s = getState();
+      if (!s) return;
+      const c = getCombatantById(s, combatantId);
       if (!c) return;
       const canOpen = isGM || c.ownerId === playerId;
-      if (canOpen) showFollowUpModal(state, combatantId);
+      if (canOpen) showFollowUpModal(combatantId);
     }
   });
 }
 
-function resolveNext(state: CombatState): void {
-  const cycle = state.round!.currentCycle;
-  let idx = cycle.currentResolutionIndex;
-  if (idx >= cycle.resolutionOrder.length) return;
+function resolveNext(): void {
+  updateState((s) => {
+    const cycle = s.round!.currentCycle;
+    let idx = cycle.currentResolutionIndex;
+    if (idx >= cycle.resolutionOrder.length) return s;
 
-  // Mark current declaration as resolved
-  const currentId = cycle.resolutionOrder[idx];
-  const currentDecl = cycle.declarations.find((d) => d.combatantId === currentId);
-  let declarations = cycle.declarations.map((d) =>
-    d.combatantId === currentId ? { ...d, resolved: true } : d,
-  );
+    // Mark current declaration as resolved
+    const currentId = cycle.resolutionOrder[idx];
+    const currentDecl = cycle.declarations.find((d) => d.combatantId === currentId);
+    let declarations = cycle.declarations.map((d) =>
+      d.combatantId === currentId ? { ...d, resolved: true } : d,
+    );
 
-  // If the resolved action is "wait", add combatant to waitingCombatants
-  let waitingCombatants = cycle.waitingCombatants;
-  if (currentDecl?.actionId === "wait" && !waitingCombatants.includes(currentId)) {
-    waitingCombatants = [...waitingCombatants, currentId];
-  }
-
-  idx += 1;
-
-  // Auto-skip any "done" declarations
-  while (idx < cycle.resolutionOrder.length) {
-    const nextId = cycle.resolutionOrder[idx];
-    const nextDecl = declarations.find((d) => d.combatantId === nextId);
-    if (nextDecl?.actionId === "done") {
-      declarations = declarations.map((d) =>
-        d.combatantId === nextId ? { ...d, resolved: true } : d,
-      );
-      idx += 1;
-    } else {
-      break;
+    // If the resolved action is "wait", add combatant to waitingCombatants
+    let waitingCombatants = cycle.waitingCombatants;
+    if (currentDecl?.actionId === "wait" && !waitingCombatants.includes(currentId)) {
+      waitingCombatants = [...waitingCombatants, currentId];
     }
-  }
 
-  saveState({
-    ...state,
-    round: {
-      ...state.round!,
-      currentCycle: {
-        ...cycle,
-        declarations,
-        currentResolutionIndex: idx,
-        waitingCombatants,
+    idx += 1;
+
+    // Auto-skip any "done" declarations
+    while (idx < cycle.resolutionOrder.length) {
+      const nextId = cycle.resolutionOrder[idx];
+      const nextDecl = declarations.find((d) => d.combatantId === nextId);
+      if (nextDecl?.actionId === "done") {
+        declarations = declarations.map((d) =>
+          d.combatantId === nextId ? { ...d, resolved: true } : d,
+        );
+        idx += 1;
+      } else {
+        break;
+      }
+    }
+
+    return {
+      ...s,
+      round: {
+        ...s.round!,
+        currentCycle: {
+          ...cycle,
+          declarations,
+          currentResolutionIndex: idx,
+          waitingCombatants,
+        },
       },
-    },
+    };
   });
 }
 
-function showFollowUpModal(state: CombatState, combatantId: string): void {
-  const c = getCombatantById(state, combatantId);
+function showFollowUpModal(combatantId: string): void {
+  const s = getState();
+  if (!s) return;
+  const c = getCombatantById(s, combatantId);
   if (!c) return;
-  const actions = getFollowUpActions(state, combatantId);
+  const actions = getFollowUpActions(s, combatantId);
   const name = escapeHtml(c.name);
 
   const actionButtons = CATEGORY_ORDER.map((cat) => {
@@ -328,7 +333,7 @@ function showFollowUpModal(state: CombatState, combatantId: string): void {
         const actionId = data.actionId as ActionId;
         const cost = parseInt(data.cost || "0");
         if (actionId) {
-          selectFollowUp(state, combatantId, actionId, cost);
+          selectFollowUp(combatantId, actionId, cost);
           closeModal();
         }
       }
@@ -336,69 +341,88 @@ function showFollowUpModal(state: CombatState, combatantId: string): void {
   );
 }
 
-function selectFollowUp(
-  state: CombatState,
-  combatantId: string,
-  actionId: ActionId,
-  cost: number,
-): void {
-  const cycle = state.round!.currentCycle;
-  const followUpDecl: Declaration = {
-    combatantId,
-    actionId,
-    cost,
-    locked: true,
-    resolved: true,
-  };
+function selectFollowUp(combatantId: string, actionId: ActionId, cost: number): void {
+  updateState((s) => {
+    const cycle = s.round!.currentCycle;
+    const followUpDecl: Declaration = {
+      combatantId,
+      actionId,
+      cost,
+      locked: true,
+      resolved: true,
+    };
 
-  saveState({
-    ...state,
-    round: {
-      ...state.round!,
-      currentCycle: {
-        ...cycle,
-        declarations: [...cycle.declarations, followUpDecl],
-        waitingCombatants: cycle.waitingCombatants.filter((id) => id !== combatantId),
+    return {
+      ...s,
+      round: {
+        ...s.round!,
+        currentCycle: {
+          ...cycle,
+          declarations: [...cycle.declarations, followUpDecl],
+          waitingCombatants: cycle.waitingCombatants.filter((id) => id !== combatantId),
+        },
       },
-    },
+    };
   });
 }
 
-function endCycle(state: CombatState): void {
-  const round = state.round!;
-  const cycle = round.currentCycle;
+function endCycle(): void {
+  updateState((s) => {
+    const round = s.round!;
+    const cycle = round.currentCycle;
 
-  // Deduct AP and move costs
-  const apCurrent = deductCycleCosts(round.apCurrent, cycle.declarations);
-  const movesUsed = deductCycleMoveCosts(round.movesUsed, cycle.declarations);
+    // Deduct AP and move costs
+    const apCurrent = deductCycleCosts(round.apCurrent, cycle.declarations);
+    const movesUsed = deductCycleMoveCosts(round.movesUsed, cycle.declarations);
 
-  // Check if anyone can still act
-  const testState: CombatState = {
-    ...state,
-    round: { ...round, apCurrent, movesUsed },
-  };
+    // Check if anyone can still act
+    const testState: CombatState = {
+      ...s,
+      round: { ...round, apCurrent, movesUsed },
+    };
 
-  if (anyoneCanAct(testState)) {
-    saveState({
-      ...state,
-      phase: "declaration",
-      round: {
-        ...round,
-        apCurrent,
-        movesUsed,
-        currentCycle: {
-          cycleNumber: cycle.cycleNumber + 1,
-          declarations: [],
-          resolutionOrder: [],
-          currentResolutionIndex: 0,
-          waitingCombatants: [],
+    if (anyoneCanAct(testState)) {
+      return {
+        ...s,
+        phase: "declaration",
+        round: {
+          ...round,
+          apCurrent,
+          movesUsed,
+          currentCycle: {
+            cycleNumber: cycle.cycleNumber + 1,
+            declarations: [],
+            resolutionOrder: [],
+            currentResolutionIndex: 0,
+            waitingCombatants: [],
+          },
+          completedCycles: round.completedCycles + 1,
         },
-        completedCycles: round.completedCycles + 1,
-      },
-    });
-  } else {
-    saveState({
-      ...state,
+      };
+    } else {
+      return {
+        ...s,
+        phase: "round-end",
+        round: {
+          ...round,
+          apCurrent,
+          movesUsed,
+          completedCycles: round.completedCycles + 1,
+        },
+      };
+    }
+  });
+}
+
+function forceEndRound(): void {
+  updateState((s) => {
+    const round = s.round!;
+    const cycle = round.currentCycle;
+    const apCurrent = deductCycleCosts(round.apCurrent, cycle.declarations);
+    const movesUsed = deductCycleMoveCosts(round.movesUsed, cycle.declarations);
+
+    return {
+      ...s,
       phase: "round-end",
       round: {
         ...round,
@@ -406,24 +430,6 @@ function endCycle(state: CombatState): void {
         movesUsed,
         completedCycles: round.completedCycles + 1,
       },
-    });
-  }
-}
-
-function forceEndRound(state: CombatState): void {
-  const round = state.round!;
-  const cycle = round.currentCycle;
-  const apCurrent = deductCycleCosts(round.apCurrent, cycle.declarations);
-  const movesUsed = deductCycleMoveCosts(round.movesUsed, cycle.declarations);
-
-  saveState({
-    ...state,
-    phase: "round-end",
-    round: {
-      ...round,
-      apCurrent,
-      movesUsed,
-      completedCycles: round.completedCycles + 1,
-    },
+    };
   });
 }

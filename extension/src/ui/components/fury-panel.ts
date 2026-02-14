@@ -1,5 +1,5 @@
 import type { CombatState, FurySpendType } from "../../types";
-import { saveState } from "../../state/store";
+import { updateState } from "../../state/store";
 import { FURY_SPEND_OPTIONS, canSpendFury, appendFuryLog } from "../../rules/fury";
 import { getCurrentAp } from "../../state/selectors";
 import { showModal, closeModal } from "../modal";
@@ -54,36 +54,39 @@ export function showFuryModal(state: CombatState, playerId: string, isGM: boolea
       if (action === "modal-spend-fury") {
         const spendType = data.spendType as FurySpendType;
         const cost = parseInt(data.cost || "0");
-        if (!canSpendFury(state.fury.current, spendType)) return;
 
-        const roundNum = state.round?.roundNumber ?? 0;
-        const newLog = appendFuryLog(state.fury.log, {
-          type: "spend",
-          amount: cost,
-          spendType,
-          round: roundNum,
-        });
+        updateState((s) => {
+          if (!canSpendFury(s.fury.current, spendType)) return s;
 
-        const newState: CombatState = {
-          ...state,
-          fury: { current: state.fury.current - cost, log: newLog },
-        };
+          const roundNum = s.round?.roundNumber ?? 0;
+          const newLog = appendFuryLog(s.fury.log, {
+            type: "spend",
+            amount: cost,
+            spendType,
+            round: roundNum,
+          });
 
-        // For +1 AP, find the player's combatant and boost their AP
-        if (spendType === "ap-boost") {
-          const pc = state.combatants.find(
-            (c) => c.ownerId === playerId && c.side === "player" && c.status === "active",
-          );
-          if (pc && newState.round) {
-            const currentAp = getCurrentAp(state, pc.id);
-            newState.round = {
-              ...newState.round,
-              apCurrent: { ...newState.round.apCurrent, [pc.id]: currentAp + 1 },
-            };
+          const newState: CombatState = {
+            ...s,
+            fury: { current: s.fury.current - cost, log: newLog },
+          };
+
+          // For +1 AP, find the player's combatant and boost their AP
+          if (spendType === "ap-boost") {
+            const pc = s.combatants.find(
+              (c) => c.ownerId === playerId && c.side === "player" && c.status === "active",
+            );
+            if (pc && newState.round) {
+              const currentAp = getCurrentAp(s, pc.id);
+              newState.round = {
+                ...newState.round,
+                apCurrent: { ...newState.round.apCurrent, [pc.id]: currentAp + 1 },
+              };
+            }
           }
-        }
 
-        saveState(newState);
+          return newState;
+        });
         closeModal();
       }
 
@@ -93,23 +96,22 @@ export function showFuryModal(state: CombatState, playerId: string, isGM: boolea
         const val = parseInt(input.value);
         if (isNaN(val) || val < 0) return;
 
-        const diff = val - state.fury.current;
-        if (diff === 0) {
-          closeModal();
-          return;
-        }
+        updateState((s) => {
+          const diff = val - s.fury.current;
+          if (diff === 0) return s;
 
-        const roundNum = state.round?.roundNumber ?? 0;
-        const newLog = appendFuryLog(state.fury.log, {
-          type: diff > 0 ? "bank" : "spend",
-          amount: Math.abs(diff),
-          ...(diff < 0 ? { spendType: "custom" as FurySpendType } : {}),
-          round: roundNum,
-        });
+          const roundNum = s.round?.roundNumber ?? 0;
+          const newLog = appendFuryLog(s.fury.log, {
+            type: diff > 0 ? "bank" : "spend",
+            amount: Math.abs(diff),
+            ...(diff < 0 ? { spendType: "custom" as FurySpendType } : {}),
+            round: roundNum,
+          });
 
-        saveState({
-          ...state,
-          fury: { current: val, log: newLog },
+          return {
+            ...s,
+            fury: { current: val, log: newLog },
+          };
         });
         closeModal();
       }

@@ -49,6 +49,13 @@ export function subscribe(listener: Listener): () => void {
   };
 }
 
+export async function updateState(updater: (current: CombatState) => CombatState): Promise<void> {
+  const current = getState();
+  if (!current) return;
+  const next = updater(current);
+  await saveState(next);
+}
+
 export function initSync(): () => void {
   return OBR.room.onMetadataChange((metadata) => {
     if (pendingWrites > 0) return;

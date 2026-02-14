@@ -1,5 +1,5 @@
 import type { CombatState, Combatant, Declaration, ActionId } from "../../types";
-import { saveState } from "../../state/store";
+import { updateState } from "../../state/store";
 import {
   getActiveCombatants,
   getCurrentAp,
@@ -218,7 +218,6 @@ function renderActionPicker(
 
 export function bindDeclarationEvents(
   container: HTMLElement,
-  state: CombatState,
   playerId: string,
   isGM: boolean,
 ): void {
@@ -233,195 +232,200 @@ export function bindDeclarationEvents(
         const actionId = target.dataset.actionId as ActionId;
         const cost = parseInt(target.dataset.cost || "0");
         if (combatantId && actionId) {
-          selectAction(state, combatantId, actionId, cost, playerId, isGM);
+          selectAction(combatantId, actionId, cost, playerId, isGM);
         }
         break;
       }
       case "declare-done": {
         const combatantId = target.dataset.combatantId;
         if (combatantId) {
-          declareDone(state, combatantId, playerId, isGM);
+          declareDone(combatantId, playerId, isGM);
         }
         break;
       }
       case "lock-declaration": {
         const combatantId = target.dataset.combatantId;
         if (combatantId) {
-          lockDeclaration(state, combatantId);
+          lockDeclaration(combatantId);
         }
         break;
       }
       case "unlock-declaration": {
         const combatantId = target.dataset.combatantId;
         if (combatantId && isGM) {
-          unlockDeclaration(state, combatantId);
+          unlockDeclaration(combatantId);
         }
         break;
       }
       case "undo-done-for-round": {
         const combatantId = target.dataset.combatantId;
         if (combatantId && isGM) {
-          undoDoneForRound(state, combatantId);
+          undoDoneForRound(combatantId);
         }
         break;
       }
       case "advance-resolution":
-        if (isGM) advanceToResolution(state);
+        if (isGM) advanceToResolution();
         break;
       case "force-end-round":
-        if (isGM) forceEndRound(state);
+        if (isGM) forceEndRound();
         break;
     }
   });
 }
 
 function selectAction(
-  state: CombatState,
   combatantId: string,
   actionId: ActionId,
   cost: number,
   playerId: string,
   isGM: boolean,
 ): void {
-  const c = state.combatants.find((c) => c.id === combatantId);
-  if (!c) return;
+  updateState((s) => {
+    const c = s.combatants.find((c) => c.id === combatantId);
+    if (!c) return s;
 
-  const canDeclare = (isGM && c.side === "monster") || c.ownerId === playerId;
-  if (!canDeclare) return;
+    const canDeclare = (isGM && c.side === "monster") || c.ownerId === playerId;
+    if (!canDeclare) return s;
 
-  const cycle = state.round!.currentCycle;
-  const existing = cycle.declarations.filter((d) => d.combatantId !== combatantId);
-  const newDecl: Declaration = {
-    combatantId,
-    actionId,
-    cost,
-    locked: false,
-  };
+    const cycle = s.round!.currentCycle;
+    const existing = cycle.declarations.filter((d) => d.combatantId !== combatantId);
+    const newDecl: Declaration = {
+      combatantId,
+      actionId,
+      cost,
+      locked: false,
+    };
 
-  saveState({
-    ...state,
-    round: {
-      ...state.round!,
-      currentCycle: {
-        ...cycle,
-        declarations: [...existing, newDecl],
+    return {
+      ...s,
+      round: {
+        ...s.round!,
+        currentCycle: {
+          ...cycle,
+          declarations: [...existing, newDecl],
+        },
       },
-    },
+    };
   });
 }
 
-function declareDone(
-  state: CombatState,
-  combatantId: string,
-  playerId: string,
-  isGM: boolean,
-): void {
-  const c = state.combatants.find((c) => c.id === combatantId);
-  if (!c) return;
+function declareDone(combatantId: string, playerId: string, isGM: boolean): void {
+  updateState((s) => {
+    const c = s.combatants.find((c) => c.id === combatantId);
+    if (!c) return s;
 
-  const canDeclare = (isGM && c.side === "monster") || c.ownerId === playerId;
-  if (!canDeclare) return;
+    const canDeclare = (isGM && c.side === "monster") || c.ownerId === playerId;
+    if (!canDeclare) return s;
 
-  const round = state.round!;
-  const cycle = round.currentCycle;
-  // Remove any existing declaration for this combatant
-  const existing = cycle.declarations.filter((d) => d.combatantId !== combatantId);
-  // Add a locked "done" declaration for the current cycle
-  const doneDecl: Declaration = {
-    combatantId,
-    actionId: "done",
-    cost: 0,
-    locked: true,
-  };
-  // Add to doneForRound so they stay done in future cycles
-  const doneForRound = round.doneForRound.includes(combatantId)
-    ? round.doneForRound
-    : [...round.doneForRound, combatantId];
+    const round = s.round!;
+    const cycle = round.currentCycle;
+    // Remove any existing declaration for this combatant
+    const existing = cycle.declarations.filter((d) => d.combatantId !== combatantId);
+    // Add a locked "done" declaration for the current cycle
+    const doneDecl: Declaration = {
+      combatantId,
+      actionId: "done",
+      cost: 0,
+      locked: true,
+    };
+    // Add to doneForRound so they stay done in future cycles
+    const doneForRound = round.doneForRound.includes(combatantId)
+      ? round.doneForRound
+      : [...round.doneForRound, combatantId];
 
-  saveState({
-    ...state,
-    round: {
-      ...round,
-      doneForRound,
-      currentCycle: {
-        ...cycle,
-        declarations: [...existing, doneDecl],
+    return {
+      ...s,
+      round: {
+        ...round,
+        doneForRound,
+        currentCycle: {
+          ...cycle,
+          declarations: [...existing, doneDecl],
+        },
       },
-    },
+    };
   });
 }
 
-function undoDoneForRound(state: CombatState, combatantId: string): void {
-  const round = state.round!;
-  saveState({
-    ...state,
+function undoDoneForRound(combatantId: string): void {
+  updateState((s) => ({
+    ...s,
     round: {
-      ...round,
-      doneForRound: round.doneForRound.filter((id) => id !== combatantId),
+      ...s.round!,
+      doneForRound: s.round!.doneForRound.filter((id) => id !== combatantId),
     },
-  });
+  }));
 }
 
-function lockDeclaration(state: CombatState, combatantId: string): void {
-  const cycle = state.round!.currentCycle;
-  const declarations = cycle.declarations.map((d) =>
-    d.combatantId === combatantId ? { ...d, locked: true } : d,
-  );
+function lockDeclaration(combatantId: string): void {
+  updateState((s) => {
+    const cycle = s.round!.currentCycle;
+    const declarations = cycle.declarations.map((d) =>
+      d.combatantId === combatantId ? { ...d, locked: true } : d,
+    );
 
-  saveState({
-    ...state,
-    round: {
-      ...state.round!,
-      currentCycle: { ...cycle, declarations },
-    },
-  });
-}
-
-function unlockDeclaration(state: CombatState, combatantId: string): void {
-  const cycle = state.round!.currentCycle;
-  const declarations = cycle.declarations.map((d) =>
-    d.combatantId === combatantId ? { ...d, locked: false } : d,
-  );
-
-  saveState({
-    ...state,
-    round: {
-      ...state.round!,
-      currentCycle: { ...cycle, declarations },
-    },
-  });
-}
-
-function advanceToResolution(state: CombatState): void {
-  const order = buildResolutionOrder(state);
-  saveState({
-    ...state,
-    phase: "resolution",
-    round: {
-      ...state.round!,
-      currentCycle: {
-        ...state.round!.currentCycle,
-        resolutionOrder: order,
-        currentResolutionIndex: 0,
+    return {
+      ...s,
+      round: {
+        ...s.round!,
+        currentCycle: { ...cycle, declarations },
       },
-    },
+    };
   });
 }
 
-function forceEndRound(state: CombatState): void {
-  const round = state.round!;
-  const cycle = round.currentCycle;
-  const apCurrent = deductCycleCosts(round.apCurrent, cycle.declarations);
-  const movesUsed = deductCycleMoveCosts(round.movesUsed, cycle.declarations);
+function unlockDeclaration(combatantId: string): void {
+  updateState((s) => {
+    const cycle = s.round!.currentCycle;
+    const declarations = cycle.declarations.map((d) =>
+      d.combatantId === combatantId ? { ...d, locked: false } : d,
+    );
 
-  saveState({
-    ...state,
-    phase: "round-end",
-    round: {
-      ...round,
-      apCurrent,
-      movesUsed,
-      completedCycles: round.completedCycles + 1,
-    },
+    return {
+      ...s,
+      round: {
+        ...s.round!,
+        currentCycle: { ...cycle, declarations },
+      },
+    };
+  });
+}
+
+function advanceToResolution(): void {
+  updateState((s) => {
+    const order = buildResolutionOrder(s);
+    return {
+      ...s,
+      phase: "resolution",
+      round: {
+        ...s.round!,
+        currentCycle: {
+          ...s.round!.currentCycle,
+          resolutionOrder: order,
+          currentResolutionIndex: 0,
+        },
+      },
+    };
+  });
+}
+
+function forceEndRound(): void {
+  updateState((s) => {
+    const round = s.round!;
+    const cycle = round.currentCycle;
+    const apCurrent = deductCycleCosts(round.apCurrent, cycle.declarations);
+    const movesUsed = deductCycleMoveCosts(round.movesUsed, cycle.declarations);
+
+    return {
+      ...s,
+      phase: "round-end",
+      round: {
+        ...round,
+        apCurrent,
+        movesUsed,
+        completedCycles: round.completedCycles + 1,
+      },
+    };
   });
 }

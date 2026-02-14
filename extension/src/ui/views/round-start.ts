@@ -1,5 +1,5 @@
 import type { CombatState, Combatant, CombatantSide } from "../../types";
-import { saveState } from "../../state/store";
+import { getState, updateState } from "../../state/store";
 import { getActiveCombatants } from "../../state/selectors";
 import { computeStartingAp } from "../../rules/ap";
 import { rollD6 } from "../../dice/roller";
@@ -21,13 +21,19 @@ export function renderRoundStartView(
       c.status === "active" && !c.surprised && !c.apVariance && round.apRolls[c.id] === undefined,
   );
   if (needsAutoAssign.length > 0) {
-    const apRolls = { ...round.apRolls };
-    const apCurrent = { ...round.apCurrent };
-    for (const c of needsAutoAssign) {
-      apRolls[c.id] = 0;
-      apCurrent[c.id] = c.apBase;
-    }
-    saveState({ ...state, round: { ...round, apRolls, apCurrent } });
+    updateState((s) => {
+      const r = s.round!;
+      const apRolls = { ...r.apRolls };
+      const apCurrent = { ...r.apCurrent };
+      const activeNow = getActiveCombatants(s);
+      for (const c of activeNow) {
+        if (c.status === "active" && !c.surprised && !c.apVariance && apRolls[c.id] === undefined) {
+          apRolls[c.id] = 0;
+          apCurrent[c.id] = c.apBase;
+        }
+      }
+      return { ...s, round: { ...r, apRolls, apCurrent } };
+    });
     return "";
   }
 
@@ -163,7 +169,6 @@ function renderApRow(
 
 export function bindRoundStartEvents(
   container: HTMLElement,
-  state: CombatState,
   playerId: string,
   isGM: boolean,
 ): void {
@@ -175,59 +180,66 @@ export function bindRoundStartEvents(
 
     switch (action) {
       case "roll-single-ap":
-        if (id) rollSingleAp(state, id, playerId, isGM);
+        if (id) rollSingleAp(id, playerId, isGM);
         break;
       case "set-manual-ap":
-        if (id) showSetApModal(state, id, playerId, isGM);
+        if (id) showSetApModal(id, playerId, isGM);
         break;
       case "roll-monster-ap":
-        if (isGM) rollMonsterAp(state);
+        if (isGM) rollMonsterAp();
         break;
       case "toggle-side-surprise":
-        if (isGM) toggleSideSurprise(state, target.dataset.side as CombatantSide);
+        if (isGM) toggleSideSurprise(target.dataset.side as CombatantSide);
         break;
       case "begin-declaration":
-        if (isGM) beginDeclaration(state);
+        if (isGM) beginDeclaration();
         break;
     }
   });
 }
 
-function rollSingleAp(
-  state: CombatState,
-  combatantId: string,
-  playerId: string,
-  isGM: boolean,
-): void {
-  const c = state.combatants.find((c) => c.id === combatantId);
+function rollSingleAp(combatantId: string, playerId: string, isGM: boolean): void {
+  const s = getState();
+  if (!s) return;
+  const c = s.combatants.find((c) => c.id === combatantId);
   if (!c || c.status !== "active") return;
 
   const canRoll = isGM || (c.ownerId === playerId && c.side === "player");
   if (!canRoll) return;
 
-  const round = state.round!;
-  if (round.apRolls[combatantId] !== undefined) return;
-
+  // Roll outside updater to avoid re-rolling
   const roll = rollD6();
-  const ap = computeStartingAp(c.apBase, roll, c.dexCategory, c.apVariance, c.surprised);
 
-  saveState({
-    ...state,
-    round: {
-      ...round,
-      apRolls: { ...round.apRolls, [combatantId]: roll },
-      apCurrent: { ...round.apCurrent, [combatantId]: ap },
-    },
+  updateState((s) => {
+    const round = s.round!;
+    // Guard: already rolled
+    if (round.apRolls[combatantId] !== undefined) return s;
+    const combatant = s.combatants.find((c) => c.id === combatantId);
+    if (!combatant || combatant.status !== "active") return s;
+
+    const ap = computeStartingAp(
+      combatant.apBase,
+      roll,
+      combatant.dexCategory,
+      combatant.apVariance,
+      combatant.surprised,
+    );
+
+    return {
+      ...s,
+      round: {
+        ...round,
+        apRolls: { ...round.apRolls, [combatantId]: roll },
+        apCurrent: { ...round.apCurrent, [combatantId]: ap },
+      },
+    };
   });
 }
 
-function showSetApModal(
-  state: CombatState,
-  combatantId: string,
-  playerId: string,
-  isGM: boolean,
-): void {
-  const c = state.combatants.find((c) => c.id === combatantId);
+function showSetApModal(combatantId: string, playerId: string, isGM: boolean): void {
+  const s = getState();
+  if (!s) return;
+  const c = s.combatants.find((c) => c.id === combatantId);
   if (!c || c.status !== "active") return;
 
   const canSet = isGM || (c.ownerId === playerId && c.side === "player");
@@ -261,14 +273,16 @@ function showSetApModal(
         const val = parseInt(input.value);
         if (isNaN(val) || val < 1) return;
 
-        const round = state.round!;
-        saveState({
-          ...state,
-          round: {
-            ...round,
-            apRolls: { ...round.apRolls, [combatantId]: 0 },
-            apCurrent: { ...round.apCurrent, [combatantId]: val },
-          },
+        updateState((s) => {
+          const round = s.round!;
+          return {
+            ...s,
+            round: {
+              ...round,
+              apRolls: { ...round.apRolls, [combatantId]: 0 },
+              apCurrent: { ...round.apCurrent, [combatantId]: val },
+            },
+          };
         });
         closeModal();
       }
@@ -276,85 +290,102 @@ function showSetApModal(
   );
 }
 
-function rollMonsterAp(state: CombatState): void {
-  const active = getActiveCombatants(state);
-  const round = state.round!;
-  const apRolls = { ...round.apRolls };
-  const apCurrent = { ...round.apCurrent };
+function rollMonsterAp(): void {
+  // Roll all dice outside updater to avoid re-rolling
+  const s = getState();
+  if (!s) return;
+  const active = getActiveCombatants(s);
+  const round = s.round!;
 
+  const rolls: Record<string, number> = {};
   for (const c of active) {
     if (c.side !== "monster" || c.status !== "active") continue;
-    if (apRolls[c.id] !== undefined) continue;
-
-    const roll = rollD6();
-    apRolls[c.id] = roll;
-    apCurrent[c.id] = computeStartingAp(c.apBase, roll, c.dexCategory, c.apVariance, c.surprised);
+    if (round.apRolls[c.id] !== undefined) continue;
+    rolls[c.id] = rollD6();
   }
 
-  saveState({
-    ...state,
-    round: { ...round, apRolls, apCurrent },
+  updateState((s) => {
+    const round = s.round!;
+    const apRolls = { ...round.apRolls };
+    const apCurrent = { ...round.apCurrent };
+
+    for (const c of s.combatants) {
+      if (c.side !== "monster" || c.status !== "active") continue;
+      if (apRolls[c.id] !== undefined) continue;
+      const roll = rolls[c.id];
+      if (roll === undefined) continue;
+
+      apRolls[c.id] = roll;
+      apCurrent[c.id] = computeStartingAp(c.apBase, roll, c.dexCategory, c.apVariance, c.surprised);
+    }
+
+    return {
+      ...s,
+      round: { ...round, apRolls, apCurrent },
+    };
   });
 }
 
-function toggleSideSurprise(state: CombatState, side: CombatantSide): void {
-  const active = getActiveCombatants(state);
-  const sideCombatants = active.filter((c) => c.side === side && c.status === "active");
-  const allSurprised = sideCombatants.every((c) => c.surprised);
-  const newSurprised = !allSurprised;
+function toggleSideSurprise(side: CombatantSide): void {
+  updateState((s) => {
+    const active = getActiveCombatants(s);
+    const sideCombatants = active.filter((c) => c.side === side && c.status === "active");
+    const allSurprised = sideCombatants.every((c) => c.surprised);
+    const newSurprised = !allSurprised;
 
-  const combatants = state.combatants.map((c) => {
-    if (c.side !== side || c.status !== "active") return c;
-    return { ...c, surprised: newSurprised };
-  });
+    const combatants = s.combatants.map((c) => {
+      if (c.side !== side || c.status !== "active") return c;
+      return { ...c, surprised: newSurprised };
+    });
 
-  // Recalculate AP - surprised AP ignores the roll, so we can auto-set it
-  const round = state.round!;
-  const apRolls = { ...round.apRolls };
-  const apCurrent = { ...round.apCurrent };
-  for (const c of combatants) {
-    if (c.side !== side || c.status !== "active") continue;
-    if (newSurprised) {
-      // Auto-set AP for all (surprised ignores roll)
-      apCurrent[c.id] = computeStartingAp(c.apBase, 0, c.dexCategory, c.apVariance, true);
-      if (apRolls[c.id] === undefined) apRolls[c.id] = 0;
-    } else {
-      // Un-surprise: recalculate if they have a real roll, clear if auto-rolled
-      if (apRolls[c.id] === 0) {
-        delete apRolls[c.id];
-        delete apCurrent[c.id];
-      } else if (apRolls[c.id] !== undefined) {
-        apCurrent[c.id] = computeStartingAp(
-          c.apBase,
-          apRolls[c.id],
-          c.dexCategory,
-          c.apVariance,
-          false,
-        );
+    // Recalculate AP - surprised AP ignores the roll, so we can auto-set it
+    const round = s.round!;
+    const apRolls = { ...round.apRolls };
+    const apCurrent = { ...round.apCurrent };
+    for (const c of combatants) {
+      if (c.side !== side || c.status !== "active") continue;
+      if (newSurprised) {
+        // Auto-set AP for all (surprised ignores roll)
+        apCurrent[c.id] = computeStartingAp(c.apBase, 0, c.dexCategory, c.apVariance, true);
+        if (apRolls[c.id] === undefined) apRolls[c.id] = 0;
+      } else {
+        // Un-surprise: recalculate if they have a real roll, clear if auto-rolled
+        if (apRolls[c.id] === 0) {
+          delete apRolls[c.id];
+          delete apCurrent[c.id];
+        } else if (apRolls[c.id] !== undefined) {
+          apCurrent[c.id] = computeStartingAp(
+            c.apBase,
+            apRolls[c.id],
+            c.dexCategory,
+            c.apVariance,
+            false,
+          );
+        }
       }
     }
-  }
 
-  saveState({
-    ...state,
-    combatants,
-    round: { ...round, apRolls, apCurrent },
+    return {
+      ...s,
+      combatants,
+      round: { ...round, apRolls, apCurrent },
+    };
   });
 }
 
-function beginDeclaration(state: CombatState): void {
-  saveState({
-    ...state,
+function beginDeclaration(): void {
+  updateState((s) => ({
+    ...s,
     phase: "declaration",
     round: {
-      ...state.round!,
+      ...s.round!,
       currentCycle: {
-        cycleNumber: state.round!.currentCycle.cycleNumber,
+        cycleNumber: s.round!.currentCycle.cycleNumber,
         declarations: [],
         resolutionOrder: [],
         currentResolutionIndex: 0,
         waitingCombatants: [],
       },
     },
-  });
+  }));
 }
